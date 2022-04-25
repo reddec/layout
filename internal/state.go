@@ -72,7 +72,7 @@ func (p *Prompt) Skip(ctx context.Context, state map[string]interface{}) (bool, 
 		return false, err
 	}
 	if v, ok := res.(bool); ok {
-		return v, nil
+		return !v, nil
 	}
 	return false, fmt.Errorf("when condition returned not boolean")
 }

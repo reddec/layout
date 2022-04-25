@@ -92,4 +92,72 @@ func TestAsk(t *testing.T) {
 			assert.Contains(t, expected, k)
 		}
 	})
+
+	t.Run("templated default value value", func(t *testing.T) {
+		input := bytes.NewBufferString("def\n\n")
+		expected := map[string]interface{}{
+			"string":    "def",
+			"templated": "abc def",
+		}
+		prompts := []internal.Prompt{
+			{Var: "string", Type: internal.VarString},
+			{Var: "templated", Type: internal.VarString, Default: "abc {{.string}}"},
+		}
+		state := make(map[string]interface{})
+		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", state)
+		require.NoError(t, err)
+
+		for k, v := range expected {
+			assert.Equal(t, v, state[k])
+		}
+
+		for k := range state {
+			assert.Contains(t, expected, k)
+		}
+	})
+
+	t.Run("condition - skip", func(t *testing.T) {
+		input := bytes.NewBufferString("123\n\n")
+		expected := map[string]interface{}{
+			"foo": int64(123),
+		}
+		prompts := []internal.Prompt{
+			{Var: "foo", Type: internal.VarInt},
+			{Var: "skipped", Type: internal.VarString, When: "foo < 100"},
+		}
+		state := make(map[string]interface{})
+		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", state)
+		require.NoError(t, err)
+
+		for k, v := range expected {
+			assert.Equal(t, v, state[k])
+		}
+
+		for k := range state {
+			assert.Contains(t, expected, k)
+		}
+	})
+
+	t.Run("condition - pass", func(t *testing.T) {
+		input := bytes.NewBufferString("99\n\n")
+		expected := map[string]interface{}{
+			"foo":     int64(99),
+			"skipped": "",
+		}
+		prompts := []internal.Prompt{
+			{Var: "foo", Type: internal.VarInt},
+			{Var: "skipped", Type: internal.VarString, When: "foo < 100"},
+		}
+		state := make(map[string]interface{})
+		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", state)
+		require.NoError(t, err)
+
+		for k, v := range expected {
+			assert.Equal(t, v, state[k])
+		}
+
+		for k := range state {
+			assert.Contains(t, expected, k)
+		}
+	})
 }
