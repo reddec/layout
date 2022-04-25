@@ -28,15 +28,17 @@ func AskState(ctx context.Context, out io.Writer, in *bufio.Reader, prompts []Pr
 			return ctx.Err()
 		}
 
-		skip, err := prompt.Skip(ctx, state)
-		if err != nil {
-			return fmt.Errorf("step %d in %s: %w", i, baseFile, err)
-		}
-		if skip {
-			continue
+		if prompt.When != "" {
+			execute, err := prompt.When.Eval(ctx, state)
+			if err != nil {
+				return fmt.Errorf("condition in step %d in %s: %w", i, baseFile, err)
+			}
+			if !execute {
+				continue
+			}
 		}
 
-		prompt, err = prompt.Render(state)
+		prompt, err := prompt.Render(state)
 		if err != nil {
 			return fmt.Errorf("render step %d in %s: %w", i, baseFile, err)
 		}
@@ -63,18 +65,18 @@ func AskState(ctx context.Context, out io.Writer, in *bufio.Reader, prompts []Pr
 	return ctx.Err()
 }
 
-func (p *Prompt) Skip(ctx context.Context, state map[string]interface{}) (bool, error) {
-	if p.When == "" {
+func (p Condition) Eval(ctx context.Context, state map[string]interface{}) (bool, error) {
+	if p == "" {
 		return false, nil
 	}
-	res, err := tengo.Eval(ctx, p.When, state)
+	res, err := tengo.Eval(ctx, string(p), state)
 	if err != nil {
 		return false, err
 	}
 	if v, ok := res.(bool); ok {
-		return !v, nil
+		return v, nil
 	}
-	return false, fmt.Errorf("when condition returned not boolean")
+	return false, fmt.Errorf("condition returned not boolean")
 }
 
 func load(includeFile string, baseFile string) ([]Prompt, string, error) {
