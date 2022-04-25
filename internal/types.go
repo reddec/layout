@@ -12,8 +12,8 @@ type Prompt struct {
 	Label   string // template
 	Include string // template
 	Var     string
-	Type    string
-	Options []string // allowed values, templated
+	Type    VarType
+	Options []string // allowed values, templated, only for list or string type
 	Default string   // template
 	When    string   // tengo
 }
