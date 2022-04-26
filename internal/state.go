@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/Masterminds/sprig/v3"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -19,10 +20,14 @@ import (
 
 func Ask(ctx context.Context, prompts []Prompt, baseFile string) (map[string]interface{}, error) {
 	var state = make(map[string]interface{})
-	return state, AskState(ctx, os.Stdout, bufio.NewReader(os.Stdin), prompts, baseFile, state)
+	rootDir := "."
+	if baseFile != "" {
+		rootDir = filepath.Dir(baseFile)
+	}
+	return state, AskState(ctx, os.Stdout, bufio.NewReader(os.Stdin), prompts, baseFile, os.DirFS(rootDir), state)
 }
 
-func AskState(ctx context.Context, out io.Writer, in *bufio.Reader, prompts []Prompt, baseFile string, state map[string]interface{}) error {
+func AskState(ctx context.Context, out io.Writer, in *bufio.Reader, prompts []Prompt, baseFile string, source fs.FS, state map[string]interface{}) error {
 	for i, prompt := range prompts {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -44,11 +49,11 @@ func AskState(ctx context.Context, out io.Writer, in *bufio.Reader, prompts []Pr
 		}
 
 		if prompt.Include != "" {
-			children, childFile, err := load(prompt.Include, baseFile)
+			children, childFile, err := include(prompt.Include, baseFile, source)
 			if err != nil {
 				return fmt.Errorf("step %d, file %s, include %s: %w", i, baseFile, prompt.Include, err)
 			}
-			if err := AskState(ctx, out, in, children, childFile, state); err != nil {
+			if err := AskState(ctx, out, in, children, childFile, source, state); err != nil {
 				return fmt.Errorf("step %d, file %s, process include %s: %w", i, baseFile, prompt.Include, err)
 			}
 			continue
@@ -79,10 +84,11 @@ func (p Condition) Eval(ctx context.Context, state map[string]interface{}) (bool
 	return false, fmt.Errorf("condition returned not boolean")
 }
 
-func load(includeFile string, baseFile string) ([]Prompt, string, error) {
+func include(includeFile string, baseFile string, source fs.FS) ([]Prompt, string, error) {
 	file := filepath.Join(path.Dir(baseFile), includeFile)
 	var prompts []Prompt
-	f, err := os.Open(file)
+
+	f, err := source.Open(file)
 	if err != nil {
 		return nil, file, err
 	}
