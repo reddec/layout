@@ -13,6 +13,7 @@ prompts:
   - var: extra
     label: Enable extra
     type: bool
+    default: "false"
 computed:
   - var: bar
     value: "{{.foo}} as bar"

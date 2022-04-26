@@ -10,6 +10,10 @@ import (
 	"path/filepath"
 )
 
+func Deploy(ctx context.Context, src string, targetDir string) error {
+	return DeployFrom(ctx, src, targetDir, os.Stdout, bufio.NewReader(os.Stdin))
+}
+
 func DeployFrom(ctx context.Context, src string, targetDir string, out io.Writer, in *bufio.Reader) error {
 	var projectDir string
 

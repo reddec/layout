@@ -81,7 +81,7 @@ func (rq *requestOpt) Default(value string) *requestOpt {
 	if rq.err != nil || value == "" {
 		return rq
 	}
-	if _, err := fmt.Fprint(rq.out, " [default: ", value, "] "); err != nil {
+	if _, err := fmt.Fprint(rq.out, "[default: ", value, "] "); err != nil {
 		return rq.withError(err)
 	}
 	rq.defaultValue = value
@@ -111,7 +111,7 @@ func (rq *requestOpt) Bool() (bool, error) {
 	if rq.err != nil {
 		return false, rq.err
 	}
-	if _, err := fmt.Fprint(rq.out, " (y/n): "); err != nil {
+	if _, err := fmt.Fprint(rq.out, "(y/n): "); err != nil {
 		rq.err = err
 		return false, err
 	}
