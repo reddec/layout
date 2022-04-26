@@ -27,10 +27,12 @@ func (p Prompt) ask(out io.Writer, in *bufio.Reader) (interface{}, error) {
 		return rq.List()
 	case VarBool:
 		return rq.Bool()
-	case VarString:
+	case "":
 		fallthrough
-	default:
+	case VarString:
 		return rq.String()
+	default:
+		return nil, fmt.Errorf("unsupported type %s", p.Type)
 	}
 }
 
