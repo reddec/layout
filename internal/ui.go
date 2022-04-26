@@ -24,7 +24,7 @@ func (p Prompt) ask(out io.Writer, in *bufio.Reader) (interface{}, error) {
 	case VarFloat:
 		return rq.Float()
 	case VarList:
-		return rq.Many()
+		return rq.List()
 	case VarBool:
 		return rq.Bool()
 	case VarString:
@@ -86,7 +86,7 @@ func (rq *requestOpt) Default(value string) *requestOpt {
 	return rq
 }
 
-func (rq *requestOpt) Many() ([]string, error) {
+func (rq *requestOpt) List() ([]string, error) {
 	if rq.err != nil {
 		return nil, rq.err
 	}

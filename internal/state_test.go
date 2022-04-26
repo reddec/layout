@@ -14,13 +14,14 @@ import (
 
 func TestAsk(t *testing.T) {
 	t.Run("base types", func(t *testing.T) {
-		input := bytes.NewBufferString("123\ny\n456.78\nalice and bob\n1,3\n")
+		input := bytes.NewBufferString("123\ny\n456.78\nalice and bob\n1,3\nalfa, beta\n")
 		expected := map[string]interface{}{
-			"int":    int64(123),
-			"bool":   true,
-			"float":  456.78,
-			"string": "alice and bob",
-			"list":   []string{"alice", "charly"},
+			"int":       int64(123),
+			"bool":      true,
+			"float":     456.78,
+			"string":    "alice and bob",
+			"list":      []string{"alice", "charly"},
+			"free-list": []string{"alfa", "beta"},
 		}
 		prompts := []internal.Prompt{
 			{Var: "int", Type: internal.VarInt},
@@ -28,6 +29,7 @@ func TestAsk(t *testing.T) {
 			{Var: "float", Type: internal.VarFloat},
 			{Var: "string", Type: internal.VarString},
 			{Var: "list", Type: internal.VarList, Options: []string{"alice", "bob", "charly"}},
+			{Var: "free-list", Type: internal.VarList},
 		}
 		state := make(map[string]interface{})
 		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", nil, state)
