@@ -19,7 +19,7 @@ func (c Computed) compute(ctx context.Context, state map[string]interface{}) err
 	if !ok {
 		state[c.Var] = c.Value
 		return nil
-	}
+	} //TODO: recursively render all strings values
 
 	value, err := render(stringValue, state)
 	if err != nil {
