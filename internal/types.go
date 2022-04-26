@@ -31,8 +31,8 @@ type Prompt struct {
 
 type Computed struct {
 	Var   string
-	Value interface{} // template if value is string
-	Type  VarType     // convert to this type if value is string
+	Value interface{} // template only if value is string
+	Type  VarType     // convert to this type if value is string, otherwise value used as-is
 	When  Condition
 }
 

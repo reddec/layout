@@ -26,6 +26,9 @@ func DeployFrom(ctx context.Context, src string, targetDir string, out io.Writer
 		} else {
 			projectDir = p
 		}
+		//TODO: shorthand
+		// user/repo - github
+		// <alias>:repo - .layoutrc
 	default:
 		tmpDir, err := cloneFromGit(ctx, src, targetDir)
 		if err != nil {
