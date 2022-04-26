@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/go-git/go-git/v5"
 	"io"
 	"io/fs"
 	"os"
@@ -26,7 +27,12 @@ func DeployFrom(ctx context.Context, src string, targetDir string, out io.Writer
 			projectDir = p
 		}
 	default:
-		return fmt.Errorf("unknown source %s", src)
+		tmpDir, err := cloneFromGit(ctx, src, targetDir)
+		if err != nil {
+			return fmt.Errorf("copy project from git: %w", err)
+		}
+		defer os.RemoveAll(tmpDir)
+		projectDir = tmpDir
 	}
 
 	manifestFile := filepath.Join(projectDir, ManifestFile)
@@ -44,14 +50,39 @@ func DeployFrom(ctx context.Context, src string, targetDir string, out io.Writer
 }
 
 func cloneFromDir(srcDir string, targetDir string) (projectDir string, err error) {
-	if err := copyTree(filepath.Join(srcDir, ContentDir), targetDir); err != nil {
+	if _, err := CopyTree(filepath.Join(srcDir, ContentDir), targetDir); err != nil {
 		return "", fmt.Errorf("copy content from %s: %w", srcDir, err)
 	}
 	return srcDir, nil
 }
 
-func copyTree(src string, dest string) error {
-	return filepath.Walk(src, func(path string, info fs.FileInfo, err error) error {
+func cloneFromGit(ctx context.Context, url string, targetDir string) (projectDir string, err error) {
+	tmpDir, err := os.MkdirTemp("", "layout-*")
+	if err != nil {
+		return "", fmt.Errorf("create temp dir: %w", err)
+	}
+	_, err = git.PlainCloneContext(ctx, tmpDir, false, &git.CloneOptions{
+		URL:               url,
+		Depth:             1,
+		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+		Progress:          os.Stderr,
+	})
+	if err != nil {
+		_ = os.RemoveAll(tmpDir)
+		return "", fmt.Errorf("clone repo: %w", err)
+	}
+
+	if _, err := CopyTree(filepath.Join(tmpDir, ContentDir), targetDir); err != nil {
+		_ = os.RemoveAll(tmpDir)
+		return "", fmt.Errorf("copy content from cloned repo: %w", err)
+	}
+
+	return tmpDir, nil
+}
+
+func CopyTree(src string, dest string) ([]string, error) {
+	var files []string
+	err := filepath.Walk(src, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -63,6 +94,7 @@ func copyTree(src string, dest string) error {
 		if info.IsDir() {
 			return os.Mkdir(destPath, info.Mode())
 		}
+		files = append(files, relPath)
 		srcFile, err := os.Open(path)
 		if err != nil {
 			return fmt.Errorf("open source (%s): %w", path, err)
@@ -82,4 +114,5 @@ func copyTree(src string, dest string) error {
 
 		return destFile.Close()
 	})
+	return files, err
 }
