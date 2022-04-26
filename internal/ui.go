@@ -127,13 +127,20 @@ func (rq *requestOpt) String() (string, error) {
 	if rq.err != nil {
 		return "", rq.err
 	}
-
+	if _, err := fmt.Fprint(rq.out, "(text): "); err != nil {
+		rq.err = err
+		return "", err
+	}
 	return rq.getSingle()
 }
 
 func (rq *requestOpt) Int() (int64, error) {
 	if rq.err != nil {
 		return 0, rq.err
+	}
+	if _, err := fmt.Fprint(rq.out, "(integer): "); err != nil {
+		rq.err = err
+		return 0, err
 	}
 	line, err := rq.getSingle()
 	if err != nil {
@@ -146,6 +153,10 @@ func (rq *requestOpt) Int() (int64, error) {
 func (rq *requestOpt) Float() (float64, error) {
 	if rq.err != nil {
 		return 0, rq.err
+	}
+	if _, err := fmt.Fprint(rq.out, "(float): "); err != nil {
+		rq.err = err
+		return 0, err
 	}
 	line, err := rq.getSingle()
 	if err != nil {
