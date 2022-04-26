@@ -165,10 +165,11 @@ func TestAsk(t *testing.T) {
 	})
 
 	t.Run("include", func(t *testing.T) {
-		input := bytes.NewBufferString("99\n\n")
+		input := bytes.NewBufferString("99\n\n\n")
 		expected := map[string]interface{}{
 			"foo": int64(99),
 			"bar": "baz 99",
+			"zoo": "zoo baz 99",
 		}
 
 		source := fstest.MapFS{
@@ -176,8 +177,13 @@ func TestAsk(t *testing.T) {
 				Data: []byte(`
 - var: bar
   default: "baz {{.foo}}"
+- include: zoo.yaml # relative include
 `),
 			},
+			"dir/zoo.yaml": &fstest.MapFile{Data: []byte(`
+- var: zoo
+  default: "zoo {{.bar}}"
+`)},
 		}
 
 		prompts := []internal.Prompt{
