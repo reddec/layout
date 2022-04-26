@@ -120,8 +120,7 @@ func (rq *requestOpt) Bool() (bool, error) {
 		rq.err = err
 		return false, err
 	}
-	line = strings.ToLower(line)
-	return line == "t" || line == "y" || line == "true" || line == "yes" || line == "ok", nil
+	return toBool(line), nil
 }
 
 func (rq *requestOpt) String() (string, error) {
@@ -187,18 +186,7 @@ func (rq *requestOpt) getValues() ([]string, error) {
 		rq.err = err
 		return nil, err
 	}
-	var values []string
-	line := strings.TrimSpace(string(data))
-	for _, value := range strings.Split(line, ",") {
-		value = strings.TrimSpace(value)
-		if value == "" {
-			continue
-		}
-
-		values = append(values, value)
-
-	}
-	return values, nil
+	return toList(string(data)), nil
 }
 
 func (rq *requestOpt) getLine() (string, error) {
@@ -232,4 +220,22 @@ func (rq *requestOpt) getSingle() (string, error) {
 func (rq *requestOpt) withError(err error) *requestOpt {
 	rq.err = err
 	return rq
+}
+
+func toBool(line string) bool {
+	line = strings.ToLower(line)
+	return line == "t" || line == "y" || line == "true" || line == "yes" || line == "ok"
+}
+
+func toList(line string) []string {
+	var values []string
+	line = strings.TrimSpace(line)
+	for _, value := range strings.Split(line, ",") {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		values = append(values, value)
+	}
+	return values
 }

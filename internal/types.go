@@ -1,11 +1,20 @@
 package internal
 
+import (
+	"fmt"
+	"strconv"
+)
+
+const (
+	ContentDir = "content"
+)
+
 type Manifest struct {
 	Title    string
 	Prompts  []Prompt
 	Computed []Computed
-	Before   []Hook // hook executed before
-	After    []Hook // hook executed after
+	Before   []Hook // hook executed before generation
+	After    []Hook // hook executed after generation
 }
 
 type Prompt struct {
@@ -13,19 +22,20 @@ type Prompt struct {
 	Include string // template
 	Var     string
 	Type    VarType
-	Options []string // allowed values, templated, only for list or string type
+	Options []string // allowed values, templated
 	Default string   // template
 	When    Condition
 }
 
 type Computed struct {
 	Var   string
-	Value string // template
+	Value interface{} // template if value is string
+	Type  VarType     // convert to this type if value is string
 	When  Condition
 }
 
 type Hook struct {
-	Run  string // templated
+	Run  string // templated, shell like (mvdan.cc/sh)
 	When Condition
 }
 
@@ -38,5 +48,24 @@ const (
 	VarFloat  VarType = "float"
 	VarList   VarType = "list"
 )
+
+func (vt VarType) Parse(value string) (interface{}, error) {
+	switch vt {
+	case VarBool:
+		return toBool(value), nil
+	case VarList:
+		return toList(value), nil
+	case VarInt:
+		return strconv.ParseInt(value, 10, 64)
+	case VarFloat:
+		return strconv.ParseFloat(value, 64)
+	case "":
+		fallthrough
+	case VarString:
+		return value, nil
+	default:
+		return nil, fmt.Errorf("unknown type %s", vt)
+	}
+}
 
 type Condition string // tengo, by-default false

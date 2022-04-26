@@ -84,6 +84,13 @@ func (p Condition) Eval(ctx context.Context, state map[string]interface{}) (bool
 	return false, fmt.Errorf("condition returned not boolean")
 }
 
+func (p Condition) Ok(ctx context.Context, state map[string]interface{}) (bool, error) {
+	if p == "" {
+		return true, nil
+	}
+	return p.Eval(ctx, state)
+}
+
 func include(includeFile string, baseFile string, source fs.FS) ([]Prompt, string, error) {
 	file := filepath.Join(path.Dir(baseFile), includeFile)
 	var prompts []Prompt
