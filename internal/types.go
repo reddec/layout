@@ -6,15 +6,17 @@ import (
 )
 
 const (
-	ContentDir = "content"
+	ContentDir   = "content"
+	ManifestFile = "layout.yaml"
 )
 
 type Manifest struct {
 	Title    string
 	Prompts  []Prompt
 	Computed []Computed
-	Before   []Hook // hook executed before generation
-	After    []Hook // hook executed after generation
+	Before   []Hook   // hook executed before generation
+	After    []Hook   // hook executed after generation
+	Ignore   []string // globs, filtered files will not be templated
 }
 
 type Prompt struct {

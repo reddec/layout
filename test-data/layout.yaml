@@ -1,0 +1,21 @@
+title: Demo layout
+before:
+  - run: date > created.txt
+after:
+  - run: touch extra
+    when: extra
+  - run: echo "created" >> README.md
+prompts:
+  - var: name
+    label: Project name
+  - var: foo
+    label: Foo value
+  - var: extra
+    label: Enable extra
+    type: bool
+computed:
+  - var: bar
+    value: "{{.foo}} as bar"
+  - var: bar_extra
+    value: "extra bar"
+    when: extra
