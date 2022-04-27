@@ -9,10 +9,11 @@ prompts:
   - var: name
     label: Project name
     default: "{{.dirname}}"
+  - var: year
+    type: int
   - var: foo
     label: Foo value
   # TODO: validate by tego + regexp
-  # TODO: add retry-loop
   - var: extra
     label: Enable extra
     type: bool

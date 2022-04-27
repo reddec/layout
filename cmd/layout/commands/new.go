@@ -29,6 +29,13 @@ func (cmd NewCommand) Execute([]string) error {
 	// TODO: load config file
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
+
+	// little hack to notify UI that we are done
+	go func() {
+		<-ctx.Done()
+		_ = os.Stdin.Close()
+	}()
+
 	if err := os.MkdirAll(cmd.Args.Dest, 0755); err != nil {
 		return fmt.Errorf("create destination: %w", err)
 	}

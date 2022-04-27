@@ -6,13 +6,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Masterminds/sprig/v3"
 	"io"
 	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
 	"text/template"
+
+	"github.com/Masterminds/sprig/v3"
 
 	"github.com/d5/tengo/v2"
 	"gopkg.in/yaml.v2"
@@ -59,12 +60,21 @@ func AskState(ctx context.Context, out io.Writer, in *bufio.Reader, prompts []Pr
 			continue
 		}
 
-		value, err := prompt.ask(out, in)
-		if err != nil {
-			return fmt.Errorf("ask value for step %d in %s: %w", i, baseFile, err)
+		// retry loop
+		for {
+			value, err := prompt.ask(out, in)
+			if errors.Is(err, io.EOF) {
+				return err
+			}
+			if err != nil {
+				if _, err := fmt.Fprintln(out, "Something went wrong:", err); err != nil {
+					return fmt.Errorf("ask value for step %d in %s: %w", i, baseFile, err)
+				}
+				continue
+			}
+			state[prompt.Var] = value
+			break
 		}
-
-		state[prompt.Var] = value
 	}
 
 	return ctx.Err()
