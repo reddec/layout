@@ -129,6 +129,9 @@ func (m *Manifest) RenderTo(ctx context.Context, out io.Writer, in *bufio.Reader
 		}
 		return ioutil.WriteFile(path, []byte(data), info.Mode())
 	})
+	if err != nil {
+		return fmt.Errorf("render: %w", err)
+	}
 
 	// exec post-generate
 	for i, h := range m.After {
