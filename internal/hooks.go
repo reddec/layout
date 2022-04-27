@@ -113,3 +113,10 @@ func (h Hook) render(state map[string]interface{}) (Hook, error) {
 
 	return h, nil
 }
+
+func (h Hook) what() string {
+	if h.Script != "" {
+		return h.Script
+	}
+	return h.Run
+}
