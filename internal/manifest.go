@@ -4,13 +4,18 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"gopkg.in/yaml.v2"
+)
+
+const (
+	MagicVarDir = "dirname" // contains base name of destination directory (aka: project name)
 )
 
 func LoadManifestFromFile(file string) (*Manifest, error) {
@@ -36,6 +41,9 @@ func (m *Manifest) RenderTo(ctx context.Context, out io.Writer, in *bufio.Reader
 	}
 	source := os.DirFS(filepath.Dir(manifestFile))
 	var state = make(map[string]interface{})
+	// set magic variables
+	state[MagicVarDir] = filepath.Base(contentDir)
+
 	if err := AskState(ctx, out, in, m.Prompts, manifestFile, source, state); err != nil {
 		return fmt.Errorf("get values for prompts: %w", err)
 	}

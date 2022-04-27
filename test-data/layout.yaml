@@ -4,10 +4,11 @@ before:
 after:
   - run: touch extra
     when: extra
-  - run: echo "created" >> README.md
+  - run: echo "# {{.name}}" >> README.md # just for demonstration, better just create README.md file
 prompts:
   - var: name
     label: Project name
+    default: "{{.dirname}}"
   - var: foo
     label: Foo value
   - var: extra
