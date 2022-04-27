@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"layout/cm/layout/commands"
+	"layout/cmd/layout/commands"
 
 	"github.com/jessevdk/go-flags"
 )
