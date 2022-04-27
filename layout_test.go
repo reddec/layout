@@ -60,6 +60,10 @@ func TestRender_basic(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "Hello world the foo as bar", string(bytes.TrimSpace(content)))
 
+	rootContent, err := ioutil.ReadFile(filepath.Join(tempDir, "root.text"))
+	require.NoError(t, err)
+	require.Equal(t, "the foo", string(bytes.TrimSpace(rootContent)))
+
 	ingored, err := ioutil.ReadFile(filepath.Join(tempDir, "alice", "ignore.txt"))
 	require.NoError(t, err)
 	require.Equal(t, "This file should not be templated {{.foo}}", string(bytes.TrimSpace(ingored)))
