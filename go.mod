@@ -6,6 +6,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/d5/tengo/v2 v2.10.1
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/jessevdk/go-flags v1.5.0
 	github.com/stretchr/testify v1.7.0
 	gopkg.in/yaml.v2 v2.4.0
 	mvdan.cc/sh/v3 v3.4.3
