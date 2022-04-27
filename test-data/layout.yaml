@@ -15,7 +15,6 @@ prompts:
     type: int
   - var: foo
     label: Foo value
-  # TODO: validate by tego + regexp
   - var: extra
     label: Enable extra
     type: bool

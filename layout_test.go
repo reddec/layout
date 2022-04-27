@@ -26,9 +26,14 @@ func TestRender_basic(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
-	err = internal.DeployFrom(context.Background(), "test-data", tempDir, os.Stderr, bufio.NewReader(strings.NewReader(
-		"alice\n1234\nthe foo\nn\n",
-	)))
+	err = internal.Deploy(context.Background(), internal.Config{
+		Source: "test-data",
+		Target: tempDir,
+		Input: bufio.NewReader(strings.NewReader(
+			"alice\n1234\nthe foo\nn\n",
+		)),
+		Output: os.Stderr,
+	})
 	require.NoError(t, err)
 
 	assert.FileExists(t, filepath.Join(tempDir, "created.txt"))
@@ -102,9 +107,14 @@ func TestRender_gitClone(t *testing.T) {
 	defer os.RemoveAll(resultDir)
 
 	// wooh - finally we initialized bare repo which we can clone
-	err = internal.DeployFrom(context.Background(), "file://"+tempDir, resultDir, os.Stderr, bufio.NewReader(strings.NewReader(
-		"alice\n1234\nthe foo\nn\n",
-	)))
+	err = internal.Deploy(context.Background(), internal.Config{
+		Source: "file://" + tempDir,
+		Target: resultDir,
+		Input: bufio.NewReader(strings.NewReader(
+			"alice\n1234\nthe foo\nn\n",
+		)),
+		Output: os.Stderr,
+	})
 	require.NoError(t, err)
 
 	assert.FileExists(t, filepath.Join(resultDir, "created.txt"))

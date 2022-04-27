@@ -10,6 +10,6 @@ type ShowConfigCommand struct {
 }
 
 func (cmd ShowConfigCommand) Execute([]string) error {
-	_, err := fmt.Println(defaultConfig())
+	_, err := fmt.Println(defaultConfigFile())
 	return err
 }

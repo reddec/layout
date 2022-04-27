@@ -2,9 +2,9 @@ package commands
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
 
 	"layout/internal"
 )
@@ -19,15 +19,19 @@ type NewCommand struct {
 
 func (cmd NewCommand) configFile() string {
 	if cmd.Config == "" {
-		return defaultConfig()
+		return defaultConfigFile()
 	}
 	return cmd.Config
 }
 
 func (cmd NewCommand) Execute([]string) error {
-	// TODO: load config file
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
+
+	config, err := LoadConfig(cmd.configFile())
+	if err != nil {
+		return fmt.Errorf("read config %s: %w", cmd.configFile(), err)
+	}
 
 	// little hack to notify UI that we are done
 	go func() {
@@ -35,14 +39,10 @@ func (cmd NewCommand) Execute([]string) error {
 		_ = os.Stdin.Close()
 	}()
 
-	return internal.Deploy(ctx, cmd.Args.URL, cmd.Args.Dest)
-}
-
-func defaultConfig() string {
-	const configFile = ".layoutrc"
-	v, err := os.UserConfigDir()
-	if err != nil {
-		return configFile
-	}
-	return filepath.Join(v, "layout", configFile)
+	return internal.Deploy(ctx, internal.Config{
+		Source:  cmd.Args.URL,
+		Target:  cmd.Args.Dest,
+		Aliases: config.Abbreviations,
+		Default: config.Default,
+	})
 }
