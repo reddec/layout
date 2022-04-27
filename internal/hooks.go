@@ -19,13 +19,18 @@ package internal
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"mvdan.cc/sh/v3/interp"
 	"mvdan.cc/sh/v3/syntax"
 )
 
-func (h Hook) Execute(ctx context.Context, state map[string]interface{}, workDir string) error {
+func (h Hook) Execute(ctx context.Context, state map[string]interface{}, manifestFile string, workDir string) error {
 	ok, err := h.When.Ok(ctx, state)
 	if err != nil {
 		return fmt.Errorf("evalute condition: %w", err)
@@ -34,6 +39,13 @@ func (h Hook) Execute(ctx context.Context, state map[string]interface{}, workDir
 		return nil
 	}
 
+	if h.Script != "" {
+		return h.executeScript(ctx, state, manifestFile, workDir)
+	}
+	return h.executeInline(ctx, state, workDir)
+}
+
+func (h Hook) executeInline(ctx context.Context, state map[string]interface{}, workDir string) error {
 	cp, err := h.render(state)
 	if err != nil {
 		return fmt.Errorf("render hook: %w", err)
@@ -50,6 +62,46 @@ func (h Hook) Execute(ctx context.Context, state map[string]interface{}, workDir
 	}
 
 	return runner.Run(ctx, script)
+}
+
+func (h Hook) executeScript(ctx context.Context, state map[string]interface{}, manifestFile string, workDir string) error {
+	scriptFile := filepath.Join(filepath.Dir(manifestFile), path.Clean(h.Script))
+
+	scriptContent, err := ioutil.ReadFile(scriptFile)
+	if err != nil {
+		return fmt.Errorf("read hook script content: %w", err)
+	}
+
+	newScriptContent, err := render(string(scriptContent), state)
+	if err != nil {
+		return fmt.Errorf("render hook script content: %w", err)
+	}
+
+	f, err := os.CreateTemp("", "")
+	if err != nil {
+		return fmt.Errorf("create temp file: %w", err)
+	}
+	defer os.RemoveAll(f.Name())
+	defer f.Close()
+
+	if _, err := f.WriteString(newScriptContent); err != nil {
+		return fmt.Errorf("write rendered hook content: %w", err)
+	}
+
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("close script: %w", err)
+	}
+
+	if err := os.Chmod(f.Name(), 0700); err != nil {
+		return fmt.Errorf("mark script as executable: %w", err)
+	}
+
+	cmd := exec.CommandContext(ctx, f.Name())
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = workDir
+
+	return cmd.Run()
 }
 
 func (h Hook) render(state map[string]interface{}) (Hook, error) {

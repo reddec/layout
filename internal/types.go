@@ -53,8 +53,9 @@ type Computed struct {
 }
 
 type Hook struct {
-	Run  string // templated, shell like (mvdan.cc/sh)
-	When Condition
+	Run    string // templated, shell like (mvdan.cc/sh)
+	Script string // path to script (executable), relative to manifest, content templated
+	When   Condition
 }
 
 type VarType string

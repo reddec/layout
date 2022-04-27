@@ -81,7 +81,7 @@ func (m *Manifest) RenderTo(ctx context.Context, out io.Writer, in *bufio.Reader
 
 	// execute pre-generate
 	for i, h := range m.Before {
-		if err := h.Execute(ctx, state, contentDir); err != nil {
+		if err := h.Execute(ctx, state, manifestFile, contentDir); err != nil {
 			return fmt.Errorf("execute pre-generate hook #%d: %w", i, err)
 		}
 	}
@@ -132,7 +132,7 @@ func (m *Manifest) RenderTo(ctx context.Context, out io.Writer, in *bufio.Reader
 
 	// exec post-generate
 	for i, h := range m.After {
-		if err := h.Execute(ctx, state, contentDir); err != nil {
+		if err := h.Execute(ctx, state, manifestFile, contentDir); err != nil {
 			return fmt.Errorf("execute post-generate hook #%d: %w", i, err)
 		}
 	}
