@@ -11,6 +11,8 @@ prompts:
     default: "{{.dirname}}"
   - var: foo
     label: Foo value
+  # TODO: validate by tego + regexp
+  # TODO: add retry-loop
   - var: extra
     label: Enable extra
     type: bool
