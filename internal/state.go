@@ -16,7 +16,7 @@ import (
 	"github.com/Masterminds/sprig/v3"
 
 	"github.com/d5/tengo/v2"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func Ask(ctx context.Context, prompts []Prompt, baseFile string) (map[string]interface{}, error) {
