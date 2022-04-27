@@ -27,6 +27,7 @@ const (
 )
 
 type Manifest struct {
+	// TODO: minimal supported version
 	Title    string
 	Prompts  []Prompt
 	Computed []Computed
