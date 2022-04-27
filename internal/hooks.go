@@ -56,7 +56,7 @@ func (h Hook) executeInline(ctx context.Context, state map[string]interface{}, w
 		return fmt.Errorf("parse script: %w", err)
 	}
 
-	runner, err := interp.New(interp.Dir(workDir))
+	runner, err := interp.New(interp.Dir(workDir), interp.StdIO(nil, os.Stdout, os.Stderr))
 	if err != nil {
 		return fmt.Errorf("create script runner: %w", err)
 	}
