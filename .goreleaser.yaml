@@ -20,6 +20,9 @@ nfpms:
       - deb
       - rpm
     maintainer: Aleksandr Baryshnikov <owner@reddec.net>
+    description: |-
+      Tool for scaffolding new project from template
+    license: Apache 2.0
 checksum:
   name_template: 'checksums.txt'
 snapshot:
