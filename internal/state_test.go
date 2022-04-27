@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"layout/internal"
 	"os"
 	"testing"
 	"testing/fstest"
+
+	"layout/internal"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAsk(t *testing.T) {
@@ -192,6 +194,27 @@ func TestAsk(t *testing.T) {
 		}
 		state := make(map[string]interface{})
 		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", source, state)
+		require.NoError(t, err)
+
+		for k, v := range expected {
+			assert.Equal(t, v, state[k])
+		}
+
+		for k := range state {
+			assert.Contains(t, expected, k)
+		}
+	})
+
+	t.Run("retry on error", func(t *testing.T) {
+		input := bytes.NewBufferString("abc\n123\n")
+		expected := map[string]interface{}{
+			"foo": int64(123),
+		}
+		prompts := []internal.Prompt{
+			{Var: "foo", Type: internal.VarInt},
+		}
+		state := make(map[string]interface{})
+		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", nil, state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
