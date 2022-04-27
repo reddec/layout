@@ -63,7 +63,7 @@ func AskState(ctx context.Context, out io.Writer, in *bufio.Reader, prompts []Pr
 		// retry loop
 		for {
 			value, err := prompt.ask(out, in)
-			if errors.Is(err, io.EOF) {
+			if errors.Is(err, io.EOF) || errors.Is(err, os.ErrClosed) {
 				return err
 			}
 			if err != nil {

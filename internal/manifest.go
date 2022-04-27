@@ -29,11 +29,11 @@ func LoadManifestFromFile(file string) (*Manifest, error) {
 	return &m, yaml.NewDecoder(f).Decode(&m)
 }
 
-func (m *Manifest) Render(ctx context.Context, manifestFile, contentDir string) error {
-	return m.RenderTo(ctx, os.Stdout, bufio.NewReader(os.Stdin), manifestFile, contentDir)
+func (m *Manifest) Render(ctx context.Context, manifestFile, contentDir, sourceDir string) error {
+	return m.RenderTo(ctx, os.Stdout, bufio.NewReader(os.Stdin), manifestFile, contentDir, sourceDir)
 }
 
-func (m *Manifest) RenderTo(ctx context.Context, out io.Writer, in *bufio.Reader, manifestFile, contentDir string) error {
+func (m *Manifest) RenderTo(ctx context.Context, out io.Writer, in *bufio.Reader, manifestFile, contentDir string, sourceDir string) error {
 	if m.Title != "" {
 		if _, err := fmt.Fprintln(out, m.Title); err != nil {
 			return fmt.Errorf("print title: %w", err)
@@ -52,6 +52,15 @@ func (m *Manifest) RenderTo(ctx context.Context, out io.Writer, in *bufio.Reader
 		if err := c.compute(ctx, state); err != nil {
 			return fmt.Errorf("compute value #%d (%s): %w", i, c.Var, err)
 		}
+	}
+
+	// here there is sense to copy content, not before state computation
+	if err := os.MkdirAll(contentDir, 0755); err != nil {
+		return fmt.Errorf("create destination: %w", err)
+	}
+
+	if _, err := CopyTree(sourceDir, contentDir); err != nil {
+		return fmt.Errorf("copy content: %w", err)
 	}
 
 	// execute pre-generate

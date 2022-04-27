@@ -2,7 +2,6 @@ package commands
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -36,9 +35,6 @@ func (cmd NewCommand) Execute([]string) error {
 		_ = os.Stdin.Close()
 	}()
 
-	if err := os.MkdirAll(cmd.Args.Dest, 0755); err != nil {
-		return fmt.Errorf("create destination: %w", err)
-	}
 	return internal.Deploy(ctx, cmd.Args.URL, cmd.Args.Dest)
 }
 

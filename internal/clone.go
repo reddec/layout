@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/go-git/go-git/v5"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	"github.com/go-git/go-git/v5"
 )
 
 func Deploy(ctx context.Context, src string, targetDir string) error {
@@ -21,30 +22,26 @@ func DeployFrom(ctx context.Context, src string, targetDir string, out io.Writer
 	info, err := os.Stat(src)
 	switch {
 	case err == nil && info.IsDir():
-		if p, err := cloneFromDir(src, targetDir); err != nil {
-			return fmt.Errorf("copy project from %s: %w", src, err)
-		} else {
-			projectDir = p
-		}
+		projectDir = src
 		//TODO: shorthand
 		// user/repo - github
 		// <alias>:repo - .layoutrc
 	default:
-		tmpDir, err := cloneFromGit(ctx, src, targetDir)
+		tmpDir, err := cloneFromGit(ctx, src)
 		if err != nil {
 			return fmt.Errorf("copy project from git: %w", err)
 		}
 		defer os.RemoveAll(tmpDir)
 		projectDir = tmpDir
 	}
-
+	sourceDir := filepath.Join(projectDir, ContentDir)
 	manifestFile := filepath.Join(projectDir, ManifestFile)
 	manifest, err := LoadManifestFromFile(manifestFile)
 	if err != nil {
 		return fmt.Errorf("load manifest %s: %w", manifestFile, err)
 	}
 
-	err = manifest.RenderTo(ctx, out, in, manifestFile, targetDir)
+	err = manifest.RenderTo(ctx, out, in, manifestFile, targetDir, sourceDir)
 	if err != nil {
 		return fmt.Errorf("render: %w", err)
 	}
@@ -52,14 +49,7 @@ func DeployFrom(ctx context.Context, src string, targetDir string, out io.Writer
 	return nil
 }
 
-func cloneFromDir(srcDir string, targetDir string) (projectDir string, err error) {
-	if _, err := CopyTree(filepath.Join(srcDir, ContentDir), targetDir); err != nil {
-		return "", fmt.Errorf("copy content from %s: %w", srcDir, err)
-	}
-	return srcDir, nil
-}
-
-func cloneFromGit(ctx context.Context, url string, targetDir string) (projectDir string, err error) {
+func cloneFromGit(ctx context.Context, url string) (projectDir string, err error) {
 	tmpDir, err := os.MkdirTemp("", "layout-*")
 	if err != nil {
 		return "", fmt.Errorf("create temp dir: %w", err)
@@ -73,11 +63,6 @@ func cloneFromGit(ctx context.Context, url string, targetDir string) (projectDir
 	if err != nil {
 		_ = os.RemoveAll(tmpDir)
 		return "", fmt.Errorf("clone repo: %w", err)
-	}
-
-	if _, err := CopyTree(filepath.Join(tmpDir, ContentDir), targetDir); err != nil {
-		_ = os.RemoveAll(tmpDir)
-		return "", fmt.Errorf("copy content from cloned repo: %w", err)
 	}
 
 	return tmpDir, nil
