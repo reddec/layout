@@ -5,18 +5,20 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
-	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
-	"layout/internal"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"layout/internal"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRender_basic(t *testing.T) {
@@ -25,7 +27,7 @@ func TestRender_basic(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	err = internal.DeployFrom(context.Background(), "test-data", tempDir, os.Stderr, bufio.NewReader(strings.NewReader(
-		"alice\nthe foo\nn\n",
+		"alice\n1234\nthe foo\nn\n",
 	)))
 	require.NoError(t, err)
 
@@ -36,6 +38,10 @@ func TestRender_basic(t *testing.T) {
 	content, err := ioutil.ReadFile(filepath.Join(tempDir, "alice", "the foo.txt"))
 	require.NoError(t, err)
 	require.Equal(t, "Hello world the foo as bar", string(bytes.TrimSpace(content)))
+
+	ingored, err := ioutil.ReadFile(filepath.Join(tempDir, "alice", "ignore.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "This file should not be templated {{.foo}}", string(bytes.TrimSpace(ingored)))
 }
 
 func TestRender_gitClone(t *testing.T) {
@@ -97,7 +103,7 @@ func TestRender_gitClone(t *testing.T) {
 
 	// wooh - finally we initialized bare repo which we can clone
 	err = internal.DeployFrom(context.Background(), "file://"+tempDir, resultDir, os.Stderr, bufio.NewReader(strings.NewReader(
-		"alice\nthe foo\nn\n",
+		"alice\n1234\nthe foo\nn\n",
 	)))
 	require.NoError(t, err)
 

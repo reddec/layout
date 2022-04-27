@@ -5,6 +5,8 @@ after:
   - run: touch extra
     when: extra
   - run: echo "# {{.name}}" >> README.md # just for demonstration, better just create README.md file
+ignore:
+  - "**/ignore*"
 prompts:
   - var: name
     label: Project name

@@ -118,7 +118,7 @@ func (m *Manifest) RenderTo(ctx context.Context, out io.Writer, in *bufio.Reader
 func (m *Manifest) filesToIgnore(contentDir string) (map[string]bool, error) {
 	var set = make(map[string]bool)
 	for i, pattern := range m.Ignore {
-		list, err := filepath.Glob(pattern)
+		list, err := filepath.Glob(filepath.Join(contentDir, pattern))
 		if err != nil {
 			return nil, fmt.Errorf("match files in ignore pattern #%d (%s): %w", i, pattern, err)
 		}
