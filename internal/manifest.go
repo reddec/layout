@@ -17,15 +17,16 @@ limitations under the License.
 package internal
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"layout/internal/ui"
+	"layout/internal/ui/simple"
 
 	"gopkg.in/yaml.v2"
 )
@@ -46,21 +47,22 @@ func LoadManifestFromFile(file string) (*Manifest, error) {
 }
 
 func (m *Manifest) Render(ctx context.Context, manifestFile, contentDir, sourceDir string) error {
-	return m.RenderTo(ctx, os.Stdout, bufio.NewReader(os.Stdin), manifestFile, contentDir, sourceDir)
+	return m.RenderTo(ctx, simple.Default(), manifestFile, contentDir, sourceDir)
 }
 
-func (m *Manifest) RenderTo(ctx context.Context, out io.Writer, in *bufio.Reader, manifestFile, contentDir string, sourceDir string) error {
+func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, manifestFile, contentDir string, sourceDir string) error {
 	if m.Title != "" {
-		if _, err := fmt.Fprintln(out, m.Title); err != nil {
-			return fmt.Errorf("print title: %w", err)
+		if err := display.Title(ctx, m.Title); err != nil {
+			return fmt.Errorf("show title: %w", err)
 		}
+
 	}
 	source := os.DirFS(filepath.Dir(manifestFile))
 	var state = make(map[string]interface{})
 	// set magic variables
 	state[MagicVarDir] = filepath.Base(contentDir)
 
-	if err := AskState(ctx, out, in, m.Prompts, manifestFile, source, state); err != nil {
+	if err := AskState(ctx, display, m.Prompts, manifestFile, source, state); err != nil {
 		return fmt.Errorf("get values for prompts: %w", err)
 	}
 

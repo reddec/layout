@@ -20,11 +20,12 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"os"
+	"io"
 	"testing"
 	"testing/fstest"
 
 	"layout/internal"
+	"layout/internal/ui/simple"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,7 +51,7 @@ func TestAsk(t *testing.T) {
 			{Var: "free-list", Type: internal.VarList},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", nil, state)
+		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -71,7 +72,7 @@ func TestAsk(t *testing.T) {
 			{Var: "int", Type: internal.VarInt, Default: "123"},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", nil, state)
+		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -89,7 +90,7 @@ func TestAsk(t *testing.T) {
 			{Var: "string", Type: internal.VarString, Options: []string{"abc", "def"}},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", nil, state)
+		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
 		require.Error(t, err)
 	})
 
@@ -102,7 +103,7 @@ func TestAsk(t *testing.T) {
 			{Var: "string", Type: internal.VarString, Options: []string{"abc", "def"}},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", nil, state)
+		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -125,7 +126,7 @@ func TestAsk(t *testing.T) {
 			{Var: "templated", Type: internal.VarString, Default: "abc {{.string}}"},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", nil, state)
+		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -147,7 +148,7 @@ func TestAsk(t *testing.T) {
 			{Var: "skipped", Type: internal.VarString, When: "foo < 100"},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", nil, state)
+		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -170,7 +171,7 @@ func TestAsk(t *testing.T) {
 			{Var: "skipped", Type: internal.VarString, When: "foo < 100"},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", nil, state)
+		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -209,7 +210,7 @@ func TestAsk(t *testing.T) {
 			{Include: "dir/xxx.yaml"},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", source, state)
+		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", source, state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -230,7 +231,7 @@ func TestAsk(t *testing.T) {
 			{Var: "foo", Type: internal.VarInt},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), os.Stdout, bufio.NewReader(input), prompts, "", nil, state)
+		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
 		require.NoError(t, err)
 
 		for k, v := range expected {

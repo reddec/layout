@@ -17,7 +17,6 @@ limitations under the License.
 package internal
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -28,6 +27,9 @@ import (
 	"path"
 	"path/filepath"
 	"text/template"
+
+	"layout/internal/ui"
+	"layout/internal/ui/simple"
 
 	"github.com/Masterminds/sprig/v3"
 
@@ -41,10 +43,10 @@ func Ask(ctx context.Context, prompts []Prompt, baseFile string) (map[string]int
 	if baseFile != "" {
 		rootDir = filepath.Dir(baseFile)
 	}
-	return state, AskState(ctx, os.Stdout, bufio.NewReader(os.Stdin), prompts, baseFile, os.DirFS(rootDir), state)
+	return state, AskState(ctx, simple.Default(), prompts, baseFile, os.DirFS(rootDir), state)
 }
 
-func AskState(ctx context.Context, out io.Writer, in *bufio.Reader, prompts []Prompt, baseFile string, source fs.FS, state map[string]interface{}) error {
+func AskState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile string, source fs.FS, state map[string]interface{}) error {
 	for i, prompt := range prompts {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -70,7 +72,7 @@ func AskState(ctx context.Context, out io.Writer, in *bufio.Reader, prompts []Pr
 			if err != nil {
 				return fmt.Errorf("step %d, file %s, include %s: %w", i, baseFile, prompt.Include, err)
 			}
-			if err := AskState(ctx, out, in, children, childFile, source, state); err != nil {
+			if err := AskState(ctx, display, children, childFile, source, state); err != nil {
 				return fmt.Errorf("step %d, file %s, process include %s: %w", i, baseFile, prompt.Include, err)
 			}
 			continue
@@ -78,12 +80,12 @@ func AskState(ctx context.Context, out io.Writer, in *bufio.Reader, prompts []Pr
 
 		// retry loop
 		for {
-			value, err := prompt.ask(out, in)
+			value, err := prompt.ask(ctx, display)
 			if errors.Is(err, io.EOF) || errors.Is(err, os.ErrClosed) {
 				return err
 			}
 			if err != nil {
-				if _, err := fmt.Fprintln(out, "Something went wrong:", err); err != nil {
+				if err := display.Error(ctx, err.Error()); err != nil {
 					return fmt.Errorf("ask value for step %d in %s: %w", i, baseFile, err)
 				}
 				continue
