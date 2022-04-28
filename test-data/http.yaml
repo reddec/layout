@@ -1,0 +1,2 @@
+- var: enable_http
+  label: Enable HTTP

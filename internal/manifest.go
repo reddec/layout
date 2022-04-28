@@ -59,6 +59,7 @@ func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, manifestFile, co
 
 	}
 	source := os.DirFS(filepath.Dir(manifestFile))
+	manifestFile = filepath.Base(manifestFile)
 	var state = make(map[string]interface{})
 	// set magic variables
 	state[MagicVarDir] = filepath.Base(contentDir)
@@ -92,7 +93,7 @@ func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, manifestFile, co
 
 	// execute pre-generate
 	for i, h := range m.Before {
-		if err := h.Execute(ctx, state, manifestFile, contentDir); err != nil {
+		if err := h.Execute(ctx, state, contentDir, source); err != nil {
 			return fmt.Errorf("execute pre-generate hook #%d (%s): %w", i, h.what(), err)
 		}
 	}
@@ -146,7 +147,7 @@ func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, manifestFile, co
 
 	// exec post-generate
 	for i, h := range m.After {
-		if err := h.Execute(ctx, state, manifestFile, contentDir); err != nil {
+		if err := h.Execute(ctx, state, contentDir, source); err != nil {
 			return fmt.Errorf("execute post-generate hook #%d (%s): %w", i, h.what(), err)
 		}
 	}

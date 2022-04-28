@@ -19,18 +19,17 @@ package internal
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"mvdan.cc/sh/v3/interp"
 	"mvdan.cc/sh/v3/syntax"
 )
 
-func (h Hook) Execute(ctx context.Context, state map[string]interface{}, manifestFile string, workDir string) error {
+func (h Hook) Execute(ctx context.Context, state map[string]interface{}, workDir string, layoutFS fs.FS) error {
 	ok, err := h.When.Ok(ctx, state)
 	if err != nil {
 		return fmt.Errorf("evalute condition: %w", err)
@@ -40,7 +39,7 @@ func (h Hook) Execute(ctx context.Context, state map[string]interface{}, manifes
 	}
 
 	if h.Script != "" {
-		return h.executeScript(ctx, state, manifestFile, workDir)
+		return h.executeScript(ctx, state, workDir, layoutFS)
 	}
 	return h.executeInline(ctx, state, workDir)
 }
@@ -64,10 +63,8 @@ func (h Hook) executeInline(ctx context.Context, state map[string]interface{}, w
 	return runner.Run(ctx, script)
 }
 
-func (h Hook) executeScript(ctx context.Context, state map[string]interface{}, manifestFile string, workDir string) error {
-	scriptFile := filepath.Join(filepath.Dir(manifestFile), path.Clean(h.Script))
-
-	scriptContent, err := ioutil.ReadFile(scriptFile)
+func (h Hook) executeScript(ctx context.Context, state map[string]interface{}, workDir string, layoutFS fs.FS) error {
+	scriptContent, err := fs.ReadFile(layoutFS, path.Clean(h.Script))
 	if err != nil {
 		return fmt.Errorf("read hook script content: %w", err)
 	}

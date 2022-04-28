@@ -25,6 +25,8 @@ prompts:
     label: Enable extra
     type: bool
     default: "false"
+  - include: http.yaml
+    when: extra
   - var: os
     label: Supported OS
     type: list
