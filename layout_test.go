@@ -48,7 +48,7 @@ func TestRender_basic(t *testing.T) {
 		Source: "test-data",
 		Target: tempDir,
 		Display: simple.New(bufio.NewReader(strings.NewReader(
-			"alice\n1234\nthe foo\nn\n1\n",
+			"alice\n1234\n3\nn\n1\n",
 		)), io.Discard),
 	})
 	require.NoError(t, err)
@@ -132,7 +132,7 @@ func TestRender_gitClone(t *testing.T) {
 		Source: "file://" + tempDir,
 		Target: resultDir,
 		Display: simple.New(bufio.NewReader(strings.NewReader(
-			"alice\n1234\nthe foo\nn\n1\n",
+			"alice\n1234\n3\nn\n1\n",
 		)), io.Discard),
 	})
 	require.NoError(t, err)

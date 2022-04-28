@@ -94,6 +94,12 @@ func (ui *UI) Select(_ context.Context, question string, defaultValue string, op
 		return "", err
 	}
 
+	if idx := indexOf(options, defaultValue); idx != -1 {
+		defaultValue = strconv.Itoa(idx + 1)
+	} else {
+		defaultValue = ""
+	}
+
 	opts, err := ui.readOptions(options, defaultValue)
 	if err != nil {
 		return "", err
@@ -123,6 +129,12 @@ func (ui *UI) Choose(_ context.Context, question string, defaultValue string, op
 		if err := ui.print("[default: ", defaultValue, "] "); err != nil {
 			return nil, err
 		}
+	}
+
+	if idx := indexOf(options, defaultValue); idx != -1 {
+		defaultValue = strconv.Itoa(idx + 1)
+	} else {
+		defaultValue = ""
 	}
 
 	if err := ui.print(": "); err != nil {
@@ -198,4 +210,13 @@ func toList(line string) []string {
 		values = append(values, value)
 	}
 	return values
+}
+
+func indexOf(list []string, item string) int {
+	for i, v := range list {
+		if v == item {
+			return i
+		}
+	}
+	return -1
 }

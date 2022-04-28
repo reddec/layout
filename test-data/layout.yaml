@@ -16,6 +16,11 @@ prompts:
     type: int
   - var: foo
     label: Foo value
+    options:
+      - alice
+      - bob
+      - the foo
+    default: alice
   - var: extra
     label: Enable extra
     type: bool
