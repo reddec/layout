@@ -102,7 +102,7 @@ func (p Condition) Eval(ctx context.Context, state map[string]interface{}) (bool
 	if p == "" {
 		return false, nil
 	}
-	res, err := tengo.Eval(ctx, string(p), state)
+	res, err := tengo.Eval(ctx, string(p), sanitizeState(state))
 	if err != nil {
 		return false, err
 	}
@@ -185,4 +185,20 @@ func (p Prompt) Render(state map[string]interface{}) (Prompt, error) {
 	p.Options = options
 
 	return p, nil
+}
+
+func sanitizeState(state map[string]interface{}) map[string]interface{} {
+	ng := make(map[string]interface{}, len(state))
+	for k, v := range state {
+
+		if s, ok := v.([]string); ok { // tengo can not understand other arrays except []byte or []interface{}
+			var ans = make([]interface{}, 0, len(s))
+			for _, item := range s {
+				ans = append(ans, item)
+			}
+			v = ans
+		}
+		ng[k] = v
+	}
+	return ng
 }

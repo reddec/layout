@@ -20,6 +20,13 @@ prompts:
     label: Enable extra
     type: bool
     default: "false"
+  - var: os
+    label: Supported OS
+    type: list
+    options:
+      - Linux
+      - Windows
+      - MacOSx
 computed:
   - var: bar
     value: "{{.foo}} as bar"
