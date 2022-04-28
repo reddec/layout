@@ -30,7 +30,9 @@ import (
 	"mvdan.cc/sh/v3/syntax"
 )
 
-func (h Hook) Execute(ctx context.Context, state map[string]interface{}, workDir string, layoutFS string) error {
+// execute hook as script (priority) or inline shell. Shell is platform-independent, thanks to mvdan.cc/sh.
+// If condition (when) is not met, nothing will be processed.
+func (h Hook) execute(ctx context.Context, state map[string]interface{}, workDir string, layoutFS string) error {
 	ok, err := h.When.Ok(ctx, state)
 	if err != nil {
 		return fmt.Errorf("evalute condition: %w", err)
@@ -45,6 +47,7 @@ func (h Hook) Execute(ctx context.Context, state map[string]interface{}, workDir
 	return h.executeInline(ctx, state, workDir)
 }
 
+// execute inline (run) shell script.
 func (h Hook) executeInline(ctx context.Context, state map[string]interface{}, workDir string) error {
 	cp, err := h.render(state)
 	if err != nil {
@@ -64,6 +67,7 @@ func (h Hook) executeInline(ctx context.Context, state map[string]interface{}, w
 	return runner.Run(ctx, script)
 }
 
+// render script to temporary file and execute it. Automatically sets +x (executable) flag to file.
 func (h Hook) executeScript(ctx context.Context, state map[string]interface{}, workDir string, layoutFS string) error {
 	scriptContent, err := ioutil.ReadFile(filepath.Join(layoutFS, path.Clean(h.Script)))
 	if err != nil {
@@ -102,6 +106,7 @@ func (h Hook) executeScript(ctx context.Context, state map[string]interface{}, w
 	return cmd.Run()
 }
 
+// render templated variables: run
 func (h Hook) render(state map[string]interface{}) (Hook, error) {
 	if v, err := render(h.Run, state); err != nil {
 		return h, fmt.Errorf("render run: %w", err)
@@ -112,6 +117,7 @@ func (h Hook) render(state map[string]interface{}) (Hook, error) {
 	return h, nil
 }
 
+// describe what will be executed: path to script or shell command
 func (h Hook) what() string {
 	if h.Script != "" {
 		return h.Script

@@ -21,6 +21,8 @@ import (
 	"fmt"
 )
 
+// compute variable: render value (if string) and convert it to desired type.
+// If value is not string, it will be returned as-is
 func (c Computed) compute(ctx context.Context, state map[string]interface{}) error {
 	ok, err := c.When.Ok(ctx, state)
 	if err != nil {

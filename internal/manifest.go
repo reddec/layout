@@ -46,7 +46,7 @@ func LoadManifestFromFile(file string) (*Manifest, error) {
 	return &m, yaml.NewDecoder(f).Decode(&m)
 }
 
-func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, destinationDir string, layoutDir string, debug bool) error {
+func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir string, layoutDir string, debug bool) error {
 	if m.Title != "" {
 		if err := display.Title(ctx, m.Title); err != nil {
 			return fmt.Errorf("show title: %w", err)
@@ -85,7 +85,7 @@ func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, destinationDir s
 
 	// execute pre-generate
 	for i, h := range m.Before {
-		if err := h.Execute(ctx, state, destinationDir, layoutDir); err != nil {
+		if err := h.execute(ctx, state, destinationDir, layoutDir); err != nil {
 			return fmt.Errorf("execute pre-generate hook #%d (%s): %w", i, h.what(), err)
 		}
 	}
@@ -139,7 +139,7 @@ func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, destinationDir s
 
 	// exec post-generate
 	for i, h := range m.After {
-		if err := h.Execute(ctx, state, destinationDir, layoutDir); err != nil {
+		if err := h.execute(ctx, state, destinationDir, layoutDir); err != nil {
 			return fmt.Errorf("execute post-generate hook #%d (%s): %w", i, h.what(), err)
 		}
 	}

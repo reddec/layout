@@ -92,7 +92,7 @@ func Deploy(ctx context.Context, config Config) error {
 		return fmt.Errorf("load manifest %s: %w", manifestFile, err)
 	}
 
-	err = manifest.RenderTo(ctx, config.Display, config.Target, projectDir, config.Debug)
+	err = manifest.renderTo(ctx, config.Display, config.Target, projectDir, config.Debug)
 	if err != nil {
 		return fmt.Errorf("render: %w", err)
 	}
