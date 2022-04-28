@@ -82,11 +82,11 @@ func AskState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile str
 		for {
 			value, err := prompt.ask(ctx, display)
 			if errors.Is(err, io.EOF) || errors.Is(err, os.ErrClosed) {
-				return err
+				return fmt.Errorf("ask value for %s (step %d) in %s: %w", prompt.Var, i, baseFile, err)
 			}
 			if err != nil {
 				if err := display.Error(ctx, err.Error()); err != nil {
-					return fmt.Errorf("ask value for step %d in %s: %w", i, baseFile, err)
+					return fmt.Errorf("show error for value for step %d in %s: %w", i, baseFile, err)
 				}
 				continue
 			}

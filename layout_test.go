@@ -21,6 +21,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -29,6 +30,7 @@ import (
 	"time"
 
 	"layout/internal"
+	"layout/internal/ui/simple"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -45,10 +47,9 @@ func TestRender_basic(t *testing.T) {
 	err = internal.Deploy(context.Background(), internal.Config{
 		Source: "test-data",
 		Target: tempDir,
-		Input: bufio.NewReader(strings.NewReader(
+		Display: simple.New(bufio.NewReader(strings.NewReader(
 			"alice\n1234\nthe foo\nn\n",
-		)),
-		Output: os.Stderr,
+		)), io.Discard),
 	})
 	require.NoError(t, err)
 
@@ -130,10 +131,9 @@ func TestRender_gitClone(t *testing.T) {
 	err = internal.Deploy(context.Background(), internal.Config{
 		Source: "file://" + tempDir,
 		Target: resultDir,
-		Input: bufio.NewReader(strings.NewReader(
+		Display: simple.New(bufio.NewReader(strings.NewReader(
 			"alice\n1234\nthe foo\nn\n",
-		)),
-		Output: os.Stderr,
+		)), io.Discard),
 	})
 	require.NoError(t, err)
 

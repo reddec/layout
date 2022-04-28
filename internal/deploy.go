@@ -17,7 +17,6 @@ limitations under the License.
 package internal
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -36,20 +35,12 @@ import (
 type Config struct {
 	Source  string            // git URL, shorthand, or path to directory
 	Target  string            // destination directory
-	Input   *bufio.Reader     // input stream for parameters, default is based on os.Stdin
-	Output  io.Writer         // output stream for questions, default is os.Stdout
 	Aliases map[string]string // aliases (abbreviations) for cloning, values may contain {0} placeholder
 	Default string            // default alias (for cloning without abbreviations, such as owner/repo), value may contain {0} placeholder, default is Github
 	Display ui.UI             // how to interact with user, default is Simple TUI
 }
 
 func (cfg Config) withDefaults() Config {
-	if cfg.Input == nil {
-		cfg.Input = bufio.NewReader(os.Stdin)
-	}
-	if cfg.Output == nil {
-		cfg.Output = os.Stdout
-	}
 	if cfg.Default == "" {
 		cfg.Default = "git@github.com:{0}.git"
 	}
