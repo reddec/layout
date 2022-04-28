@@ -22,14 +22,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
 	"text/template"
 
 	"layout/internal/ui"
-	"layout/internal/ui/simple"
 
 	"github.com/Masterminds/sprig/v3"
 
@@ -37,21 +35,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func Ask(ctx context.Context, prompts []Prompt, baseFile string) (map[string]interface{}, error) {
-	var state = make(map[string]interface{})
-	rootDir := "."
-	if baseFile != "" {
-		rootDir = filepath.Dir(baseFile)
-	}
-	return state, AskState(ctx, simple.Default(), prompts, baseFile, os.DirFS(rootDir), state)
-}
-
-func AskState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile string, source fs.FS, state map[string]interface{}) error {
+// Ask questions to user and generate state. Base file initially equal to manifest file and used to resolve relative includes.
+func askState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile string, layoutDir string, state map[string]interface{}) error {
 	for i, prompt := range prompts {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
 
+		// we may skip the prompt in case condition is not empty and returns non-true
 		if prompt.When != "" {
 			execute, err := prompt.When.Eval(ctx, state)
 			if err != nil {
@@ -62,23 +53,25 @@ func AskState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile str
 			}
 		}
 
-		prompt, err := prompt.Render(state)
+		// before processing prompt further we have to render all templated fields
+		prompt, err := prompt.render(state)
 		if err != nil {
 			return fmt.Errorf("render step %d in %s: %w", i, baseFile, err)
 		}
 
+		// in case prompt is include we will recursive process file and NOT process the prompt as general variable
 		if prompt.Include != "" {
-			children, childFile, err := include(prompt.Include, baseFile, source)
+			children, childFile, err := include(prompt.Include, baseFile, layoutDir)
 			if err != nil {
 				return fmt.Errorf("step %d, file %s, include %s: %w", i, baseFile, prompt.Include, err)
 			}
-			if err := AskState(ctx, display, children, childFile, source, state); err != nil {
+			if err := askState(ctx, display, children, childFile, layoutDir, state); err != nil {
 				return fmt.Errorf("step %d, file %s, process include %s: %w", i, baseFile, prompt.Include, err)
 			}
 			continue
 		}
 
-		// retry loop
+		// in case of failed user input we will retry again and again till Stdin or context closed
 		for {
 			value, err := prompt.ask(ctx, display)
 			if errors.Is(err, io.EOF) || errors.Is(err, os.ErrClosed) {
@@ -98,6 +91,7 @@ func AskState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile str
 	return ctx.Err()
 }
 
+// Eval returns true only in case evaluated expression (in Tengo language) returns true.
 func (p Condition) Eval(ctx context.Context, state map[string]interface{}) (bool, error) {
 	if p == "" {
 		return false, nil
@@ -112,6 +106,7 @@ func (p Condition) Eval(ctx context.Context, state map[string]interface{}) (bool
 	return false, fmt.Errorf("condition returned not boolean")
 }
 
+// Ok is corner case of Eval and returns true in case expression is not set, otherwise it returns result of Eval.
 func (p Condition) Ok(ctx context.Context, state map[string]interface{}) (bool, error) {
 	if p == "" {
 		return true, nil
@@ -119,11 +114,12 @@ func (p Condition) Ok(ctx context.Context, state map[string]interface{}) (bool, 
 	return p.Eval(ctx, state)
 }
 
-func include(includeFile string, baseFile string, source fs.FS) ([]Prompt, string, error) {
-	file := filepath.Join(path.Dir(baseFile), includeFile)
+// include YAML file with relative to baseFile (which is also relative to layoutFS) path with list of prompts. File could be multi-document.
+func include(includeFile string, baseFile string, layoutFS string) ([]Prompt, string, error) {
+	file := filepath.Join(path.Dir(baseFile), path.Clean(includeFile))
 	var prompts []Prompt
 
-	f, err := source.Open(file)
+	f, err := os.Open(filepath.Join(layoutFS, file))
 	if err != nil {
 		return nil, file, err
 	}
@@ -145,17 +141,8 @@ func include(includeFile string, baseFile string, source fs.FS) ([]Prompt, strin
 	return prompts, file, nil
 }
 
-func render(value string, state map[string]interface{}) (string, error) {
-	p, err := template.New("").Funcs(sprig.TxtFuncMap()).Parse(value)
-	if err != nil {
-		return "", err
-	}
-	var out bytes.Buffer
-	err = p.Execute(&out, state)
-	return out.String(), err
-}
-
-func (p Prompt) Render(state map[string]interface{}) (Prompt, error) {
+// render all templated values in render: label, include, default, options.
+func (p Prompt) render(state map[string]interface{}) (Prompt, error) {
 	if v, err := render(p.Label, state); err != nil {
 		return p, fmt.Errorf("render label: %w", err)
 	} else {
@@ -187,6 +174,18 @@ func (p Prompt) Render(state map[string]interface{}) (Prompt, error) {
 	return p, nil
 }
 
+// render is helper for rendering go-template value with state in memory.
+func render(value string, state map[string]interface{}) (string, error) {
+	p, err := template.New("").Funcs(sprig.TxtFuncMap()).Parse(value)
+	if err != nil {
+		return "", err
+	}
+	var out bytes.Buffer
+	err = p.Execute(&out, state)
+	return out.String(), err
+}
+
+// prepares state for Tengo
 func sanitizeState(state map[string]interface{}) map[string]interface{} {
 	ng := make(map[string]interface{}, len(state))
 	for k, v := range state {

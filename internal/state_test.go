@@ -14,17 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package internal_test
+package internal
 
 import (
 	"bufio"
 	"bytes"
 	"context"
 	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
-	"testing/fstest"
 
-	"layout/internal"
 	"layout/internal/ui/simple"
 
 	"github.com/stretchr/testify/assert"
@@ -42,16 +43,16 @@ func TestAsk(t *testing.T) {
 			"list":      []string{"alice", "charly"},
 			"free-list": []string{"alfa", "beta"},
 		}
-		prompts := []internal.Prompt{
-			{Var: "int", Type: internal.VarInt},
-			{Var: "bool", Type: internal.VarBool},
-			{Var: "float", Type: internal.VarFloat},
-			{Var: "string", Type: internal.VarString},
-			{Var: "list", Type: internal.VarList, Options: []string{"alice", "bob", "charly"}},
-			{Var: "free-list", Type: internal.VarList},
+		prompts := []Prompt{
+			{Var: "int", Type: VarInt},
+			{Var: "bool", Type: VarBool},
+			{Var: "float", Type: VarFloat},
+			{Var: "string", Type: VarString},
+			{Var: "list", Type: VarList, Options: []string{"alice", "bob", "charly"}},
+			{Var: "free-list", Type: VarList},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -68,11 +69,11 @@ func TestAsk(t *testing.T) {
 		expected := map[string]interface{}{
 			"int": int64(123),
 		}
-		prompts := []internal.Prompt{
-			{Var: "int", Type: internal.VarInt, Default: "123"},
+		prompts := []Prompt{
+			{Var: "int", Type: VarInt, Default: "123"},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -86,11 +87,11 @@ func TestAsk(t *testing.T) {
 
 	t.Run("restricted value", func(t *testing.T) {
 		input := bytes.NewBufferString("woo\n")
-		prompts := []internal.Prompt{
-			{Var: "string", Type: internal.VarString, Options: []string{"abc", "def"}},
+		prompts := []Prompt{
+			{Var: "string", Type: VarString, Options: []string{"abc", "def"}},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state)
 		require.Error(t, err)
 	})
 
@@ -99,11 +100,11 @@ func TestAsk(t *testing.T) {
 		expected := map[string]interface{}{
 			"string": "def",
 		}
-		prompts := []internal.Prompt{
-			{Var: "string", Type: internal.VarString, Options: []string{"abc", "def"}},
+		prompts := []Prompt{
+			{Var: "string", Type: VarString, Options: []string{"abc", "def"}},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -121,12 +122,12 @@ func TestAsk(t *testing.T) {
 			"string":    "def",
 			"templated": "abc def",
 		}
-		prompts := []internal.Prompt{
-			{Var: "string", Type: internal.VarString},
-			{Var: "templated", Type: internal.VarString, Default: "abc {{.string}}"},
+		prompts := []Prompt{
+			{Var: "string", Type: VarString},
+			{Var: "templated", Type: VarString, Default: "abc {{.string}}"},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -143,12 +144,12 @@ func TestAsk(t *testing.T) {
 		expected := map[string]interface{}{
 			"foo": int64(123),
 		}
-		prompts := []internal.Prompt{
-			{Var: "foo", Type: internal.VarInt},
-			{Var: "skipped", Type: internal.VarString, When: "foo < 100"},
+		prompts := []Prompt{
+			{Var: "foo", Type: VarInt},
+			{Var: "skipped", Type: VarString, When: "foo < 100"},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -166,12 +167,12 @@ func TestAsk(t *testing.T) {
 			"foo":     int64(99),
 			"skipped": "",
 		}
-		prompts := []internal.Prompt{
-			{Var: "foo", Type: internal.VarInt},
-			{Var: "skipped", Type: internal.VarString, When: "foo < 100"},
+		prompts := []Prompt{
+			{Var: "foo", Type: VarInt},
+			{Var: "skipped", Type: VarString, When: "foo < 100"},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -191,26 +192,25 @@ func TestAsk(t *testing.T) {
 			"zoo": "zoo baz 99",
 		}
 
-		source := fstest.MapFS{
-			"dir/xxx.yaml": &fstest.MapFile{
-				Data: []byte(`
+		source := createDir(map[string]string{
+			"dir/xxx.yaml": `
 - var: bar
   default: "baz {{.foo}}"
 - include: zoo.yaml # relative include
-`),
-			},
-			"dir/zoo.yaml": &fstest.MapFile{Data: []byte(`
+`,
+			"dir/zoo.yaml": `
 - var: zoo
   default: "zoo {{.bar}}"
-`)},
-		}
+`,
+		})
+		defer os.RemoveAll(source)
 
-		prompts := []internal.Prompt{
-			{Var: "foo", Type: internal.VarInt},
+		prompts := []Prompt{
+			{Var: "foo", Type: VarInt},
 			{Include: "dir/xxx.yaml"},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", source, state)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", source, state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -227,11 +227,11 @@ func TestAsk(t *testing.T) {
 		expected := map[string]interface{}{
 			"foo": int64(123),
 		}
-		prompts := []internal.Prompt{
-			{Var: "foo", Type: internal.VarInt},
+		prompts := []Prompt{
+			{Var: "foo", Type: VarInt},
 		}
 		state := make(map[string]interface{})
-		err := internal.AskState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", nil, state)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -242,4 +242,22 @@ func TestAsk(t *testing.T) {
 			assert.Contains(t, expected, k)
 		}
 	})
+}
+
+func createDir(content map[string]string) string {
+	d, err := os.MkdirTemp("", "")
+	if err != nil {
+		panic(err)
+	}
+
+	for path, content := range content {
+		realPath := filepath.Join(d, path)
+		if err := os.MkdirAll(filepath.Dir(realPath), 0755); err != nil {
+			panic(err)
+		}
+		if err := ioutil.WriteFile(realPath, []byte(content), 0755); err != nil {
+			panic(err)
+		}
+	}
+	return d
 }

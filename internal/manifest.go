@@ -26,7 +26,6 @@ import (
 	"strings"
 
 	"layout/internal/ui"
-	"layout/internal/ui/simple"
 
 	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/yaml.v2"
@@ -47,24 +46,17 @@ func LoadManifestFromFile(file string) (*Manifest, error) {
 	return &m, yaml.NewDecoder(f).Decode(&m)
 }
 
-func (m *Manifest) Render(ctx context.Context, manifestFile, contentDir, sourceDir string) error {
-	return m.RenderTo(ctx, simple.Default(), manifestFile, contentDir, sourceDir, false)
-}
-
-func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, manifestFile, contentDir string, sourceDir string, debug bool) error {
+func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, destinationDir string, layoutDir string, debug bool) error {
 	if m.Title != "" {
 		if err := display.Title(ctx, m.Title); err != nil {
 			return fmt.Errorf("show title: %w", err)
 		}
-
 	}
-	source := os.DirFS(filepath.Dir(manifestFile))
-	manifestFile = filepath.Base(manifestFile)
 	var state = make(map[string]interface{})
 	// set magic variables
-	state[MagicVarDir] = filepath.Base(contentDir)
+	state[MagicVarDir] = filepath.Base(destinationDir)
 
-	if err := AskState(ctx, display, m.Prompts, manifestFile, source, state); err != nil {
+	if err := askState(ctx, display, m.Prompts, "", layoutDir, state); err != nil {
 		return fmt.Errorf("get values for prompts: %w", err)
 	}
 
@@ -83,24 +75,24 @@ func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, manifestFile, co
 	}
 
 	// here there is sense to copy content, not before state computation
-	if err := os.MkdirAll(contentDir, 0755); err != nil {
+	if err := os.MkdirAll(destinationDir, 0755); err != nil {
 		return fmt.Errorf("create destination: %w", err)
 	}
 
-	if _, err := CopyTree(sourceDir, contentDir); err != nil {
+	if _, err := CopyTree(filepath.Join(layoutDir, ContentDir), destinationDir); err != nil {
 		return fmt.Errorf("copy content: %w", err)
 	}
 
 	// execute pre-generate
 	for i, h := range m.Before {
-		if err := h.Execute(ctx, state, contentDir, source); err != nil {
+		if err := h.Execute(ctx, state, destinationDir, layoutDir); err != nil {
 			return fmt.Errorf("execute pre-generate hook #%d (%s): %w", i, h.what(), err)
 		}
 	}
 
 	// render template
 	// rename files and dirs, empty entries removed
-	err := walk(contentDir, func(dir string, d fs.DirEntry) error {
+	err := walk(destinationDir, func(dir string, d fs.DirEntry) error {
 		renderedName, err := render(d.Name(), state)
 		if err != nil {
 			return err
@@ -120,11 +112,11 @@ func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, manifestFile, co
 		return fmt.Errorf("render files names: %w", err)
 	}
 	// render file contents as template, except ignored
-	ignoredFiles, err := m.filesToIgnore(contentDir)
+	ignoredFiles, err := m.filesToIgnore(destinationDir)
 	if err != nil {
 		return fmt.Errorf("calculate which files to ignore: %w", err)
 	}
-	err = filepath.Walk(contentDir, func(path string, info fs.FileInfo, err error) error {
+	err = filepath.Walk(destinationDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -147,7 +139,7 @@ func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, manifestFile, co
 
 	// exec post-generate
 	for i, h := range m.After {
-		if err := h.Execute(ctx, state, contentDir, source); err != nil {
+		if err := h.Execute(ctx, state, destinationDir, layoutDir); err != nil {
 			return fmt.Errorf("execute post-generate hook #%d (%s): %w", i, h.what(), err)
 		}
 	}
