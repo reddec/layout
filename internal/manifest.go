@@ -28,6 +28,7 @@ import (
 	"layout/internal/ui"
 	"layout/internal/ui/simple"
 
+	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/yaml.v2"
 )
 
@@ -47,10 +48,10 @@ func LoadManifestFromFile(file string) (*Manifest, error) {
 }
 
 func (m *Manifest) Render(ctx context.Context, manifestFile, contentDir, sourceDir string) error {
-	return m.RenderTo(ctx, simple.Default(), manifestFile, contentDir, sourceDir)
+	return m.RenderTo(ctx, simple.Default(), manifestFile, contentDir, sourceDir, false)
 }
 
-func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, manifestFile, contentDir string, sourceDir string) error {
+func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, manifestFile, contentDir string, sourceDir string, debug bool) error {
 	if m.Title != "" {
 		if err := display.Title(ctx, m.Title); err != nil {
 			return fmt.Errorf("show title: %w", err)
@@ -66,10 +67,18 @@ func (m *Manifest) RenderTo(ctx context.Context, display ui.UI, manifestFile, co
 		return fmt.Errorf("get values for prompts: %w", err)
 	}
 
+	if debug {
+		spew.Dump(state)
+	}
+
 	for i, c := range m.Computed {
 		if err := c.compute(ctx, state); err != nil {
 			return fmt.Errorf("compute value #%d (%s): %w", i, c.Var, err)
 		}
+	}
+
+	if debug {
+		spew.Dump(state)
 	}
 
 	// here there is sense to copy content, not before state computation

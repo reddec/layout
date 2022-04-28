@@ -38,6 +38,7 @@ type Config struct {
 	Aliases map[string]string // aliases (abbreviations) for cloning, values may contain {0} placeholder
 	Default string            // default alias (for cloning without abbreviations, such as owner/repo), value may contain {0} placeholder, default is Github
 	Display ui.UI             // how to interact with user, default is Simple TUI
+	Debug   bool              // enable debug messages and tracing
 }
 
 func (cfg Config) withDefaults() Config {
@@ -92,7 +93,7 @@ func Deploy(ctx context.Context, config Config) error {
 		return fmt.Errorf("load manifest %s: %w", manifestFile, err)
 	}
 
-	err = manifest.RenderTo(ctx, config.Display, manifestFile, config.Target, sourceDir)
+	err = manifest.RenderTo(ctx, config.Display, manifestFile, config.Target, sourceDir, config.Debug)
 	if err != nil {
 		return fmt.Errorf("render: %w", err)
 	}

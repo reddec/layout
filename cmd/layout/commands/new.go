@@ -23,10 +23,15 @@ import (
 	"os/signal"
 
 	"layout/internal"
+	"layout/internal/ui"
+	"layout/internal/ui/nice"
+	"layout/internal/ui/simple"
 )
 
 type NewCommand struct {
 	Config string `short:"c" long:"config" env:"CONFIG" description:"Path to configuration file, use show config command to locate default location"`
+	UI     string `short:"u" long:"ui" env:"UI" description:"UI mode" default:"nice" choice:"nice" choice:"simple"`
+	Debug  bool   `short:"d" long:"debug" env:"DEBUG" description:"Enable debug mode"`
 	Args   struct {
 		URL  string `positional-arg-name:"source" required:"yes" description:"URL, abbreviation or path to layout"`
 		Dest string `positional-arg-name:"destination" required:"yes" description:"Destination directory, will be created"`
@@ -49,6 +54,12 @@ func (cmd NewCommand) Execute([]string) error {
 		return fmt.Errorf("read config %s: %w", cmd.configFile(), err)
 	}
 
+	var display ui.UI = simple.Default()
+	switch cmd.UI {
+	case "nice":
+		display = nice.New()
+
+	}
 	// little hack to notify UI that we are done
 	go func() {
 		<-ctx.Done()
@@ -60,5 +71,7 @@ func (cmd NewCommand) Execute([]string) error {
 		Target:  cmd.Args.Dest,
 		Aliases: config.Abbreviations,
 		Default: config.Default,
+		Display: display,
+		Debug:   cmd.Debug,
 	})
 }
