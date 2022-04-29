@@ -33,6 +33,7 @@ type NewCommand struct {
 	Config  string `short:"c" long:"config" env:"CONFIG" description:"Path to configuration file, use show config command to locate default location"`
 	UI      string `short:"u" long:"ui" env:"UI" description:"UI mode" default:"nice" choice:"nice" choice:"simple"`
 	Debug   bool   `short:"d" long:"debug" env:"DEBUG" description:"Enable debug mode"`
+	AskOnce bool   `short:"a" long:"ask-once" env:"ASK_ONCE" description:"Do not retry on wrong user input, good for automation"`
 	Args    struct {
 		URL  string `positional-arg-name:"source" required:"yes" description:"URL, abbreviation or path to layout"`
 		Dest string `positional-arg-name:"destination" required:"yes" description:"Destination directory, will be created"`
@@ -74,5 +75,6 @@ func (cmd NewCommand) Execute([]string) error {
 		Display: display,
 		Debug:   cmd.Debug,
 		Version: cmd.Version,
+		AskOnce: cmd.AskOnce,
 	})
 }

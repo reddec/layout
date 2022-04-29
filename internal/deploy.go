@@ -44,6 +44,7 @@ type Config struct {
 	Display ui.UI             // how to interact with user, default is Simple TUI
 	Debug   bool              // enable debug messages and tracing
 	Version string            // current version, used to filter manifests by constraints
+	AskOnce bool              // do not try to ask for user input after wrong value and interrupt deployment
 }
 
 func (cfg Config) withDefaults() Config {
@@ -103,7 +104,7 @@ func Deploy(ctx context.Context, config Config) error {
 		return fmt.Errorf("manifest version constraint (%s) requires another version of application (current %s)", manifest.Version, config.Version)
 	}
 
-	err = manifest.renderTo(ctx, config.Display, config.Target, projectDir, config.Debug)
+	err = manifest.renderTo(ctx, config.Display, config.Target, projectDir, config.Debug, config.AskOnce)
 	if err != nil {
 		return fmt.Errorf("render: %w", err)
 	}

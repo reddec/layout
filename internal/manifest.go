@@ -49,8 +49,8 @@ func loadManifest(file string) (*Manifest, error) {
 }
 
 // Communicates with user and renders all templates and executes hooks. Debug flag enables state dump to stdout
-// after user input.
-func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir string, layoutDir string, debug bool) error {
+// after user input. Once flags disables retry on wrong user input.
+func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir string, layoutDir string, debug bool, once bool) error {
 	if m.Title != "" {
 		if err := display.Title(ctx, m.Title); err != nil {
 			return fmt.Errorf("show title: %w", err)
@@ -60,7 +60,7 @@ func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir s
 	// set magic variables
 	state[MagicVarDir] = filepath.Base(destinationDir)
 
-	if err := askState(ctx, display, m.Prompts, "", layoutDir, state); err != nil {
+	if err := askState(ctx, display, m.Prompts, "", layoutDir, state, once); err != nil {
 		return fmt.Errorf("get values for prompts: %w", err)
 	}
 

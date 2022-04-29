@@ -36,7 +36,7 @@ import (
 )
 
 // Ask questions to user and generate state. Base file initially equal to manifest file and used to resolve relative includes.
-func askState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile string, layoutDir string, state map[string]interface{}) error {
+func askState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile string, layoutDir string, state map[string]interface{}, once bool) error {
 	for i, prompt := range prompts {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -65,7 +65,7 @@ func askState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile str
 			if err != nil {
 				return fmt.Errorf("step %d, file %s, include %s: %w", i, baseFile, prompt.Include, err)
 			}
-			if err := askState(ctx, display, children, childFile, layoutDir, state); err != nil {
+			if err := askState(ctx, display, children, childFile, layoutDir, state, once); err != nil {
 				return fmt.Errorf("step %d, file %s, process include %s: %w", i, baseFile, prompt.Include, err)
 			}
 			continue
@@ -78,6 +78,9 @@ func askState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile str
 				return fmt.Errorf("ask value for %s (step %d) in %s: %w", prompt.Var, i, baseFile, err)
 			}
 			if err != nil {
+				if once {
+					return fmt.Errorf("get value for %s (step %d) in %s: %w", prompt.Var, i, baseFile, err)
+				}
 				if err := display.Error(ctx, err.Error()); err != nil {
 					return fmt.Errorf("show error for value for step %d in %s: %w", i, baseFile, err)
 				}
