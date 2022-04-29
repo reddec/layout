@@ -55,3 +55,51 @@ Helpers:
 ## Magic variables
 
 - `dirname` (usage: `{{.dirname}}`) - base name of destination directory, commonly used as project name
+
+
+## Defaults
+
+The `default:` section is similar to `computed`, however, invoked before user input and can not contain conditions. 
+Most often it could be useful together with conditional include to prevent excluded variables be undefined in expressions.
+
+Example:
+
+_manifest.yaml_
+
+```yaml
+prompts:
+  - var: ask_name
+    type: bool
+  - include: name.yaml
+    when: ask_name
+after:
+  - run: echo Hello {{.name}}
+    when: name != ""
+```
+
+_name.yaml_
+
+```yaml
+- var: name
+```
+
+In case `ask_name` set to `false` the hook **will fail** because in hook condition `name != ""` used undefined variable.
+
+To fix it, you may update manifest with defaults variables:
+
+
+_manifest.yaml_
+
+```yaml
+default:
+  - var: name
+    value: ""
+prompts:
+  - var: ask_name
+    type: bool
+  - include: name.yaml
+    when: ask_name
+after:
+  - run: echo Hello {{.name}}
+    when: name != ""
+```

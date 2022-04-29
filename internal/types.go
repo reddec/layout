@@ -30,10 +30,11 @@ type Manifest struct {
 	Version  string // minimal layout version (semver). Empty means any version. Informational field and used only in main
 	Title    string
 	Prompts  []Prompt
-	Computed []Computed
-	Before   []Hook   // hook executed before generation
-	After    []Hook   // hook executed after generation
-	Ignore   []string // globs, filtered files will not be templated
+	Default  []Default  // computed values to define internal default values before processing state, useful in case of condition includes to prevent `undefined variable` error
+	Computed []Computed // computed values used to calculate variables after user input
+	Before   []Hook     // hook executed before generation
+	After    []Hook     // hook executed after generation
+	Ignore   []string   // globs, filtered files will not be templated
 }
 
 type Prompt struct {
@@ -51,6 +52,12 @@ type Computed struct {
 	Value interface{} // template only if value is string
 	Type  VarType     // convert to this type if value is string, otherwise value used as-is
 	When  Condition
+}
+
+type Default struct {
+	Var   string
+	Value interface{} // template only if value is string
+	Type  VarType     // convert to this type if value is string, otherwise value used as-is
 }
 
 type Hook struct {

@@ -51,3 +51,25 @@ func (c Computed) compute(ctx context.Context, state map[string]interface{}) err
 	state[c.Var] = parsed
 	return nil
 }
+
+// condition-less default variable: render value (if string) and convert it to desired type.
+// If value is not string, it will be returned as-is
+func (d Default) compute(state map[string]interface{}) error {
+	stringValue, ok := d.Value.(string)
+	if !ok {
+		state[d.Var] = d.Value
+		return nil
+	}
+
+	value, err := render(stringValue, state)
+	if err != nil {
+		return fmt.Errorf("render value: %w", err)
+	}
+
+	parsed, err := d.Type.Parse(value)
+	if err != nil {
+		return fmt.Errorf("parse value: %w", err)
+	}
+	state[d.Var] = parsed
+	return nil
+}

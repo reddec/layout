@@ -60,6 +60,12 @@ func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir s
 	// set magic variables
 	state[MagicVarDir] = filepath.Base(destinationDir)
 
+	for i, c := range m.Default {
+		if err := c.compute(state); err != nil {
+			return fmt.Errorf("set default value #%d (%s): %w", i, c.Var, err)
+		}
+	}
+
 	if err := askState(ctx, display, m.Prompts, "", layoutDir, state, once); err != nil {
 		return fmt.Errorf("get values for prompts: %w", err)
 	}

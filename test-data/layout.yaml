@@ -5,11 +5,14 @@ before:
 after:
   - run: touch extra
     when: extra
-  - run: echo "# {{.name}}" >> README.md # just for demonstration, better just create README.md file
+  - run: echo "# {{.name}} - {{.project}}" >> README.md # just for demonstration, better just create README.md file
     label: generate readme
   - script: hooks/add-test.sh
 ignore:
   - "**/ignore*"
+default:
+  - var: project
+    value: "The mega project"
 prompts:
   - var: name
     label: Project name
