@@ -51,3 +51,7 @@ Helpers:
 
 - `has(seq, opt) -> bool` returns true if `seq` contains value `opt`. Mostly used for checking selected options (type: `list`)
 
+
+## Magic variables
+
+- `dirname` (usage: `{{.dirname}}`) - base name of destination directory, commonly used as project name
