@@ -29,7 +29,7 @@ import (
 )
 
 type NewCommand struct {
-	Version string `long:"version" env:"VERSION" description:"Override binary version"`
+	Version string `long:"version" env:"VERSION" description:"Override binary version to bypass manifest restriction"`
 	Config  string `short:"c" long:"config" env:"CONFIG" description:"Path to configuration file, use show config command to locate default location"`
 	UI      string `short:"u" long:"ui" env:"UI" description:"UI mode" default:"nice" choice:"nice" choice:"simple"`
 	Debug   bool   `short:"d" long:"debug" env:"DEBUG" description:"Enable debug mode"`
