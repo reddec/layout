@@ -19,13 +19,13 @@ package commands
 import "fmt"
 
 type ShowCommand struct {
-	Config ShowConfigCommand `command:"config" description:"location of default config file"`
+	ConfigFile ShowConfigFileCommand `command:"config-file" description:"location of default config file"`
 }
 
-type ShowConfigCommand struct {
+type ShowConfigFileCommand struct {
 }
 
-func (cmd ShowConfigCommand) Execute([]string) error {
+func (cmd ShowConfigFileCommand) Execute([]string) error {
 	_, err := fmt.Println(defaultConfigFile())
 	return err
 }
