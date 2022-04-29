@@ -43,7 +43,7 @@ func LoadConfig(file string) (*Config, error) {
 }
 
 func defaultConfigFile() string {
-	const configFile = ".layoutrc"
+	const configFile = "layout.yaml"
 	v, err := os.UserConfigDir()
 	if err != nil {
 		return configFile

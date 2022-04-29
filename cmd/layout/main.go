@@ -42,8 +42,8 @@ func main() {
 	var config Config
 	config.New.Version = version
 	parser := flags.NewParser(&config, flags.Default)
-	parser.ShortDescription = "Scaffold new project based on layout"
-	parser.LongDescription = fmt.Sprintf("Scaffold new project based on layout\nlayout %s, commit %s, built at %s by %s\nAuthor: Aleksandr Baryshnikov <owner@reddec.net>", version, commit, date, builtBy)
+	parser.ShortDescription = "Create new project based on layout"
+	parser.LongDescription = fmt.Sprintf("Create new project based on layout\nlayout %s, commit %s, built at %s by %s\nAuthor: Aleksandr Baryshnikov <owner@reddec.net>", version, commit, date, builtBy)
 	parser.EnvNamespace = "LAYOUT"
 	if _, err := parser.Parse(); err != nil {
 		os.Exit(1)
