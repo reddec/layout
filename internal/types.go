@@ -54,6 +54,7 @@ type Computed struct {
 }
 
 type Hook struct {
+	Label  string // optional message which will displayed during execution. If nothing set, then nothing will be shown
 	Run    string // templated, shell like (mvdan.cc/sh)
 	Script string // path to script (executable), relative to manifest, content templated
 	When   Condition

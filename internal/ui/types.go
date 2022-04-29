@@ -37,4 +37,6 @@ type UI interface {
 	Error(ctx context.Context, message string) error
 	// Title shows UI title
 	Title(ctx context.Context, message string) error
+	// Info shows information message
+	Info(ctx context.Context, message string) error
 }

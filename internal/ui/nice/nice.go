@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/core"
 )
 
 func New() *UI {
@@ -71,13 +72,28 @@ func (ui *UI) Choose(_ context.Context, question string, defaultValue string, op
 }
 
 func (ui *UI) Error(_ context.Context, message string) error {
-	_, err := fmt.Println("[error] ", message)
+	const MessageTemplate = `{{color "red" }}X {{ . }}{{color "reset"}}`
+	actual, _, err := core.RunTemplate(MessageTemplate, message)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Println(actual)
 	return err
 }
 
 func (ui *UI) Title(_ context.Context, message string) error {
 	_, err := fmt.Println("\n\n", message)
 	_, _ = fmt.Println()
+	return err
+}
+
+func (ui *UI) Info(ctx context.Context, message string) error {
+	const MessageTemplate = `{{color "blue" }}-> {{ . }}{{color "reset"}}`
+	actual, _, err := core.RunTemplate(MessageTemplate, message)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Println(actual)
 	return err
 }
 

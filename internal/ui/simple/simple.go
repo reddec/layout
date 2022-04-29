@@ -144,12 +144,16 @@ func (ui *UI) Choose(_ context.Context, question string, defaultValue string, op
 	return ui.readOptions(options, defaultValue)
 }
 
-func (ui *UI) Error(ctx context.Context, message string) error {
+func (ui *UI) Error(_ context.Context, message string) error {
 	return ui.print("[error] ", message, "\n")
 }
 
-func (ui *UI) Title(ctx context.Context, message string) error {
+func (ui *UI) Title(_ context.Context, message string) error {
 	return ui.print("\n\n", message, "\n\n")
+}
+
+func (ui *UI) Info(_ context.Context, message string) error {
+	return ui.print("[info] ", message, "\n")
 }
 
 func (ui *UI) print(data ...interface{}) error {

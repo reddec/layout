@@ -231,7 +231,7 @@ func TestAsk(t *testing.T) {
 			{Var: "foo", Type: VarInt},
 		}
 		state := make(map[string]interface{})
-		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state, true)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state, false)
 		require.NoError(t, err)
 
 		for k, v := range expected {

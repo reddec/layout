@@ -85,6 +85,9 @@ func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir s
 
 	// execute pre-generate
 	for i, h := range m.Before {
+		if err := h.display(ctx, display.Info); err != nil {
+			return fmt.Errorf("display pre-generate hook #%d (%s): %w", i, h.what(), err)
+		}
 		if err := h.execute(ctx, state, destinationDir, layoutDir); err != nil {
 			return fmt.Errorf("execute pre-generate hook #%d (%s): %w", i, h.what(), err)
 		}
@@ -139,6 +142,9 @@ func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir s
 
 	// exec post-generate
 	for i, h := range m.After {
+		if err := h.display(ctx, display.Info); err != nil {
+			return fmt.Errorf("display post-generate hook #%d (%s): %w", i, h.what(), err)
+		}
 		if err := h.execute(ctx, state, destinationDir, layoutDir); err != nil {
 			return fmt.Errorf("execute post-generate hook #%d (%s): %w", i, h.what(), err)
 		}

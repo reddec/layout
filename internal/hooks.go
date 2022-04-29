@@ -30,6 +30,14 @@ import (
 	"mvdan.cc/sh/v3/syntax"
 )
 
+// display (if set) label of hook
+func (h Hook) display(ctx context.Context, printer func(ctx context.Context, message string) error) error {
+	if h.Label == "" {
+		return nil
+	}
+	return printer(ctx, h.Label)
+}
+
 // execute hook as script (priority) or inline shell. Shell is platform-independent, thanks to mvdan.cc/sh.
 // If condition (when) is not met, nothing will be processed.
 func (h Hook) execute(ctx context.Context, state map[string]interface{}, workDir string, layoutFS string) error {
