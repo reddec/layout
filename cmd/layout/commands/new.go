@@ -29,10 +29,11 @@ import (
 )
 
 type NewCommand struct {
-	Config string `short:"c" long:"config" env:"CONFIG" description:"Path to configuration file, use show config command to locate default location"`
-	UI     string `short:"u" long:"ui" env:"UI" description:"UI mode" default:"nice" choice:"nice" choice:"simple"`
-	Debug  bool   `short:"d" long:"debug" env:"DEBUG" description:"Enable debug mode"`
-	Args   struct {
+	Version string `long:"version" env:"VERSION" description:"Override binary version"`
+	Config  string `short:"c" long:"config" env:"CONFIG" description:"Path to configuration file, use show config command to locate default location"`
+	UI      string `short:"u" long:"ui" env:"UI" description:"UI mode" default:"nice" choice:"nice" choice:"simple"`
+	Debug   bool   `short:"d" long:"debug" env:"DEBUG" description:"Enable debug mode"`
+	Args    struct {
 		URL  string `positional-arg-name:"source" required:"yes" description:"URL, abbreviation or path to layout"`
 		Dest string `positional-arg-name:"destination" required:"yes" description:"Destination directory, will be created"`
 	} `positional-args:"yes"`
@@ -58,7 +59,6 @@ func (cmd NewCommand) Execute([]string) error {
 	switch cmd.UI {
 	case "nice":
 		display = nice.New()
-
 	}
 	// little hack to notify UI that we are done
 	go func() {
@@ -73,5 +73,6 @@ func (cmd NewCommand) Execute([]string) error {
 		Default: config.Default,
 		Display: display,
 		Debug:   cmd.Debug,
+		Version: cmd.Version,
 	})
 }

@@ -31,6 +31,10 @@ import (
 	"github.com/go-git/go-git/v5"
 )
 
+const (
+	defaultRepoTemplate = "git@github.com:{0}.git" // template which will be used when no abbreviation used (ex: reddec/template)
+)
+
 // Config of layout deployment.
 type Config struct {
 	Source  string            // git URL, shorthand, or path to directory
@@ -39,11 +43,12 @@ type Config struct {
 	Default string            // default alias (for cloning without abbreviations, such as owner/repo), value may contain {0} placeholder, default is Github
 	Display ui.UI             // how to interact with user, default is Simple TUI
 	Debug   bool              // enable debug messages and tracing
+	Version string            // current version, used to filter manifests by constraints
 }
 
 func (cfg Config) withDefaults() Config {
 	if cfg.Default == "" {
-		cfg.Default = "git@github.com:{0}.git"
+		cfg.Default = defaultRepoTemplate
 	}
 	if cfg.Display == nil {
 		cfg.Display = simple.Default()
@@ -69,16 +74,16 @@ func Deploy(ctx context.Context, config Config) error {
 	url := config.Source
 
 	switch {
-	case err == nil && info.IsDir():
+	case err == nil && info.IsDir(): // first try as directory
 		projectDir = config.Source
-	case !strings.Contains(config.Source, ":"):
+	case !strings.Contains(config.Source, ":"): // ok, let's try as remote. If we don't have delimiter it's shorthand for default template
 		// this is default case since url should contain either abbreviation or protocol delimited by :
 		repoTemplate = config.Default
 		fallthrough
-	case aliasExist:
+	case aliasExist: // we found abbreviation template
 		url = strings.ReplaceAll(repoTemplate, "{0}", repo)
 		fallthrough
-	default:
+	default: // finally all we need is to pull remote repository by URL
 		tmpDir, err := cloneFromGit(ctx, url)
 		if err != nil {
 			return fmt.Errorf("copy project from git %s: %w", url, err)
@@ -87,9 +92,15 @@ func Deploy(ctx context.Context, config Config) error {
 		projectDir = tmpDir
 	}
 	manifestFile := filepath.Join(projectDir, ManifestFile)
-	manifest, err := LoadManifestFromFile(manifestFile)
+	manifest, err := loadManifest(manifestFile)
 	if err != nil {
 		return fmt.Errorf("load manifest %s: %w", manifestFile, err)
+	}
+
+	if ok, err := manifest.isSupportedVersion(config.Version); err != nil {
+		return fmt.Errorf("check manifest version: %w", err)
+	} else if !ok {
+		return fmt.Errorf("manifest version constraint (%s) requires another version of application (current %s)", manifest.Version, config.Version)
 	}
 
 	err = manifest.renderTo(ctx, config.Display, config.Target, projectDir, config.Debug)
@@ -100,6 +111,9 @@ func Deploy(ctx context.Context, config Config) error {
 	return nil
 }
 
+// clones from git repository from default branch with minimal depth (1).
+// Reports progress to STDERR. Supports submodules.
+// Returned directory should be removed by caller.
 func cloneFromGit(ctx context.Context, url string) (projectDir string, err error) {
 	tmpDir, err := os.MkdirTemp("", "layout-*")
 	if err != nil {

@@ -1,4 +1,5 @@
 title: Demo layout
+version: ~1
 before:
   - run: date > created.txt
 after:

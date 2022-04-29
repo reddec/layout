@@ -27,7 +27,7 @@ const (
 )
 
 type Manifest struct {
-	// TODO: minimal supported version
+	Version  string // minimal layout version (semver). Empty means any version. Informational field and used only in main
 	Title    string
 	Prompts  []Prompt
 	Computed []Computed
