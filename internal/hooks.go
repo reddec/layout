@@ -39,16 +39,7 @@ func (h Hook) display(ctx context.Context, printer func(ctx context.Context, mes
 }
 
 // execute hook as script (priority) or inline shell. Shell is platform-independent, thanks to mvdan.cc/sh.
-// If condition (when) is not met, nothing will be processed.
 func (h Hook) execute(ctx context.Context, state map[string]interface{}, workDir string, layoutFS string) error {
-	ok, err := h.When.Ok(ctx, state)
-	if err != nil {
-		return fmt.Errorf("evalute condition: %w", err)
-	}
-	if !ok {
-		return nil
-	}
-
 	if h.Script != "" {
 		return h.executeScript(ctx, state, workDir, layoutFS)
 	}
