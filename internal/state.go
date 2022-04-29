@@ -25,6 +25,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"layout/internal/ui"
@@ -99,10 +100,24 @@ func (p Condition) Eval(ctx context.Context, state map[string]interface{}) (bool
 	if p == "" {
 		return false, nil
 	}
-	res, err := tengo.Eval(ctx, string(p), sanitizeState(state))
-	if err != nil {
-		return false, err
+	expr := strings.TrimSpace(string(p))
+	script := tengo.NewScript([]byte(fmt.Sprintf("__res__ := (%s)", expr)))
+	for pk, pv := range sanitizeState(state) {
+		err := script.Add(pk, pv)
+		if err != nil {
+			return false, fmt.Errorf("script add: %w", err)
+		}
 	}
+	// helpers
+	if err := script.Add("has", hasHelper); err != nil {
+		return false, fmt.Errorf("add 'has' helper: %w", err)
+	}
+
+	compiled, err := script.RunContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("script run: %w", err)
+	}
+	res := compiled.Get("__res__").Value()
 	if v, ok := res.(bool); ok {
 		return v, nil
 	}
@@ -203,4 +218,23 @@ func sanitizeState(state map[string]interface{}) map[string]interface{} {
 		ng[k] = v
 	}
 	return ng
+}
+
+// returns true if first argument is list and contains second argument
+func hasHelper(args ...tengo.Object) (ret tengo.Object, err error) {
+	if len(args) != 2 {
+		return tengo.UndefinedValue, fmt.Errorf("2 arguments required")
+	}
+	seq := args[0]
+	if !seq.CanIterate() {
+		return tengo.UndefinedValue, fmt.Errorf("first argument should be iterable")
+	}
+	item := args[1]
+
+	for it := seq.Iterate(); it.Next(); {
+		if it.Value().Equals(item) {
+			return tengo.TrueValue, nil
+		}
+	}
+	return tengo.FalseValue, nil
 }

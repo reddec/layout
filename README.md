@@ -45,3 +45,9 @@ sequenceDiagram
 ```
 
 
+## Tengo
+
+Helpers:
+
+- `has(seq, opt) -> bool` returns true if `seq` contains value `opt`. Mostly used for checking selected options (type: `list`)
+
