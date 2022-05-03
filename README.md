@@ -37,8 +37,16 @@ state changes (for legal details please read LICENSE file).
 
 ## Installation
 
+**Pre-build binary**: prepared for most OS in [releases](https://github.com/reddec/layout/releases).
 
-Tip: GitHub updated own public key, so I highly recommend re-scan GitHub public keys by `ssh-keyscan github.com  >> ~/.ssh/known_hosts`
+**Debian packages**:  in [releases](https://github.com/reddec/layout/releases).
+
+**From source**: requires Go 1.18+, `go install github.com/reddec/layout@latest`
+
+**Brew**: `brew install reddec/tap/layout`
+
+
+> Tip: GitHub times-to-time updates public key, so I highly recommend re-scan GitHub public keys by `ssh-keyscan github.com  >> ~/.ssh/known_hosts`
 
 ## Very quick demo
 
@@ -173,11 +181,8 @@ abbreviations:
   ex: "ssh://git@git.example.com/{0}.git" # could be used as ex:some-owner/some-repo
 ```
 
-Planning features:
+Check [roadmap](#roadmap) for upcoming features.
 
-- global default values
-- global before/after hooks
-- globally disable hooks
 
 ## Security and privacy
 
@@ -194,6 +199,28 @@ problem, however:
 
 - (suggested) clone only from trusted repo
 - (paranoid) execute layout in minimal sandbox environment such as docker or kvm and copy result data to the host.
-- (planning feature) clone by commit digest
-- (planning feature) disable hooks during cloning, however, it may break all idea of `layout`
- 
+
+See [roadmap](#roadmap) for planning related features.
+
+
+## Roadmap
+
+### Security
+
+- clone by commit digest
+- disable hooks during cloning, however, it may break all idea of `layout`
+
+### UX
+
+- global default values
+- global before/after hooks
+- globally disable hooks
+
+#### Far plans
+
+- GUI for prompts (maybe)
+- Decentralized marketplaces/discovery repositories
+
+### Flexibility
+
+- allow users use native `git` binary 
