@@ -27,7 +27,7 @@ const (
 )
 
 type Manifest struct {
-	Version  string // minimal layout version (semver). Empty means any version. Informational field and used only in main
+	Version  string // minimal layout version (semver). Empty means any version
 	Title    string
 	Prompts  []Prompt
 	Default  []Default  // computed values to define internal default values before processing state, useful in case of condition includes to prevent `undefined variable` error

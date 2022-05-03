@@ -109,6 +109,21 @@ Each repository should contain:
 
 ### Manifest
 
+Check examples in:
+
+- https://example.com/reddec/example
+- [test data](test-data) directory
+
+#### Version
+
+Layout manifest supports constraints of applied layout binary version based on [semver](github.com/Masterminds/semver).
+
+In case `version` is not specified, all versions of `layout` are allowed.
+
+For now, I suggest pinning major version only: `~1`. `layout` is following semantic version and all version withing
+one major version are backward compatible (manifest designed for `1.0.0` will work normally even in `layout`
+version `1.9.5`, but without guarantees for `2.0.0`).
+
 #### Computed
 
 The `computed:` invoked after user input and can contain conditions.
