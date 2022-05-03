@@ -114,6 +114,25 @@ Check examples in:
 - https://example.com/reddec/example
 - [test data](test-data) directory
 
+**absolute minimal example of manifest:**
+
+```yaml
+{}
+```
+
+Yes, empty object is valid manifest.
+
+**'hello world' example of manifest:**
+
+```yaml
+prompts:
+  - var: name
+after:
+  - run: "wall 'Hello, {{.name}}!'"
+```
+
+(*nix only, should broadcast message `Hello, <yourname>!`)
+
 #### Version
 
 Layout manifest supports constraints of applied layout binary version based on [semver](github.com/Masterminds/semver).
