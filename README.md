@@ -1,15 +1,17 @@
 # Layout - generate new project from layout
 
-Heavily inspired by [cookiecutter](https://github.com/cookiecutter/cookiecutter) and [yeoman](https://yeoman.io), however layout offers additional features and bonuses:
+Heavily inspired by [cookiecutter](https://github.com/cookiecutter/cookiecutter) and [yeoman](https://yeoman.io),
+however layout offers additional features and bonuses:
 
 - single binary without runtime dependencies, compiled for all major OS
 - supports boolean variables ([yikes, cookicutter!](https://github.com/cookiecutter/cookiecutter/issues/126))
-- supports conditional variables ([cookiecutter, I am again pointing to you](https://github.com/cookiecutter/cookiecutter/issues/1438))
-- supports plain includes and conditional includes
+- supports conditional
+  variables ([cookiecutter, I am again pointing to you](https://github.com/cookiecutter/cookiecutter/issues/1438))
+- supports plain includes and conditional includes (inspired by Ansible)
 - supports (and validates): string, boolean, list of strings, integer, float
 - supports versioning in case you want to lock specific version of `layout`
-- supports file source and remote Git repository
-- supports multiple inline hooks (with portable shell) and templated hooks 
+- supports file source and remote Git repository (even without installed `git`!)
+- supports multiple inline hooks (with portable shell) and templated hooks
 - hooks also supports condition :-)
 - supports normal labeling for variables input (cookiecuter...)
 
@@ -44,23 +46,46 @@ sequenceDiagram
     layout->>destination: copy and render content, execute hooks
 ```
 
+Let's describe basic example.
+Assume we made demo repository as layout which located in `https://example.com/reddec/example`.
+
+Once you executes `layout new https://example.com/reddec/example my-example`:
+
+1. `layout` goes to server which hosts repository (`example.com`) by desired protocol (`https`) and asks for content of
+   repository `example` owned by `reddec`.
+2. (optionally) `layout` negotiates authorization protocols being aware of configuration in `.gitconfig`
+3. `layout`  makes shallow (depth 1) clone of repo to a temporary directory
+4. `layout` reads `manifests.yaml` and asks questions from user
+5. `layout` creates destination directory (`my-example`) and copies data from `content` directory from cloned repo as-is
+6. `layout` executes `before` hooks
+7. `layout` renders file names and removes files and directories with empty names
+8. `layout` renders content of files except marked as ignored in `ignore` section
+9. `layout` executes `after` hooks
+10. done
+
+> In reality, `layout` will first to resolve URL as local directory, as abbreviation,
+> and at last will decide go to remote URL
+
+By default, for GitHub repositories host and protocol not needed. For example, instead
+of `layout new https://github.com/reddec/example my-example` we can use `layout new reddec/example my-example`.
+See [configuration](#configuration) for details.
 
 ## Tengo
 
 Helpers:
 
-- `has(seq, opt) -> bool` returns true if `seq` contains value `opt`. Mostly used for checking selected options (type: `list`)
-
+- `has(seq, opt) -> bool` returns true if `seq` contains value `opt`. Mostly used for checking selected options (
+  type: `list`)
 
 ## Magic variables
 
 - `dirname` (usage: `{{.dirname}}`) - base name of destination directory, commonly used as project name
 
-
 ## Defaults
 
-The `default:` section is similar to `computed`, however, invoked before user input and can not contain conditions. 
-Most often it could be useful together with conditional include to prevent excluded variables be undefined in expressions.
+The `default:` section is similar to `computed`, however, invoked before user input and can not contain conditions.
+Most often it could be useful together with conditional include to prevent excluded variables be undefined in
+expressions.
 
 Example:
 
@@ -87,7 +112,6 @@ In case `ask_name` set to `false` the hook **will fail** because in hook conditi
 
 To fix it, you may update manifest with defaults variables:
 
-
 _manifest.yaml_
 
 ```yaml
@@ -106,9 +130,10 @@ after:
 
 ## Configuration
 
-The global configuration file defines user-wide settings such as: abbreviations or default repository template. 
+The global configuration file defines user-wide settings such as: abbreviations or default repository template.
 
-If `--config, -c` not provided, the global configuration file will be used which is located under `<user config dir>/layout/layout.yaml`.
+If `--config, -c` not provided, the global configuration file will be used which is located
+under `<user config dir>/layout/layout.yaml`.
 You may check actual location by command `layout show config-file`.
 
 Specifically:
@@ -121,8 +146,10 @@ Specifically:
 Currently, it supports:
 
 * `abbreviations`: map of string -> template values where key is repo shorthand and template is string with `{0}`
-which will be replaced to the repo details. You may use abbreviations as `<abbr>:<owner>/<repo>`
+  which will be replaced to the repo details. You may use abbreviations as `<abbr>:<owner>/<repo>`
 * `default`: template for repository without shorthand, default (if not set) is `git@github.com:{0}.git`.
+
+> Hint: you may use air-gap deployment in case you stored bare repository somewhere locally.
 
 Example:
 
@@ -136,4 +163,23 @@ Planning features:
 
 - global default values
 - global before/after hooks
+- globally disable hooks
 
+## Security and privacy
+
+**Privacy**: we (authors of layout) do not collect, process or transmit anything related to your activities to our or
+third-party servers with one exception.
+Exception is the moment when you are cloning remote repository: we are not responsible for data leakage or tracking
+activities from repo owner. We are using standard git protocol (via [go-git](https://github.com/go-git/go-git)) which
+requires some "trust" to remote repository, however, this warning is not specific to only `layout`. Just be careful what
+and from where you are cloning (see below).
+
+**Security** is a bit bigger problem due to nature of idea behind the `layout`: hooks defined in manifest could
+potentially do anything in computer limited by the running user permissions. There is no universal solutions for the
+problem, however:
+
+- (suggested) clone only from trusted repo
+- (paranoid) execute layout in minimal sandbox environment such as docker or kvm and copy result data to the host.
+- (planning feature) clone by commit digest
+- (planning feature) disable hooks during cloning, however, it may break all idea of `layout`
+ 
