@@ -1,4 +1,33 @@
-# Layout - generate new project from layout
+# Layout
+
+Generate new project from layout. Supports typed user-input, hooks, and conditions. 
+
+Inspired by  [cookiecutter](https://github.com/cookiecutter/cookiecutter), [yeoman](https://yeoman.io), and Ansible.
+
+You may think about it as cookicutter-ng or modern cookiecutter.
+
+## Very quick demo
+
+`layout new reddec/layout-example my-example`
+
+Will ask you questions and generate hello-world HTML page based on your answers.
+
+[![asciicast](https://user-images.githubusercontent.com/6597086/166427829-320fefc2-7131-46a3-85e8-655f5069c2a2.gif)](https://asciinema.org/a/zDPT7o2sbxOjPHoNd5z0qnxvG)
+
+## Installation
+
+**Pre-build binary**: prepared for most OS in [releases](https://github.com/reddec/layout/releases).
+
+**Debian packages**:  in [releases](https://github.com/reddec/layout/releases).
+
+**From source**: requires Go 1.18+, `go install github.com/reddec/layout@latest`
+
+**Brew**: `brew install reddec/tap/layout`
+
+
+> Tip: GitHub times-to-time updates public key, so I highly recommend re-scan GitHub public keys by `ssh-keyscan github.com  >> ~/.ssh/known_hosts`
+
+## Motivation
 
 Heavily inspired by [cookiecutter](https://github.com/cookiecutter/cookiecutter) and [yeoman](https://yeoman.io),
 however layout offers additional features and bonuses:
@@ -34,27 +63,6 @@ This project is stands on open-source atlantis shoulders:
 ... and many many others. I love open-source, and this project is my payback.
 That's why [license](LICENSE) for the project is Apache 2.0 which means that you may use code as you wish but please
 state changes (for legal details please read LICENSE file).
-
-## Installation
-
-**Pre-build binary**: prepared for most OS in [releases](https://github.com/reddec/layout/releases).
-
-**Debian packages**:  in [releases](https://github.com/reddec/layout/releases).
-
-**From source**: requires Go 1.18+, `go install github.com/reddec/layout@latest`
-
-**Brew**: `brew install reddec/tap/layout`
-
-
-> Tip: GitHub times-to-time updates public key, so I highly recommend re-scan GitHub public keys by `ssh-keyscan github.com  >> ~/.ssh/known_hosts`
-
-## Very quick demo
-
-`layout new reddec/layout-example my-example`
-
-Will ask you questions and generate hello-world HTML page based on your answers.
-
-[![asciicast](https://asciinema.org/a/zDPT7o2sbxOjPHoNd5z0qnxvG.png)](https://asciinema.org/a/zDPT7o2sbxOjPHoNd5z0qnxvG)
 
 
 ## Architecture
