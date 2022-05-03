@@ -35,6 +35,20 @@ This project is stands on open-source atlantis shoulders:
 That's why [license](LICENSE) for the project is Apache 2.0 which means that you may use code as you wish but please
 state changes (for legal details please read LICENSE file).
 
+## Installation
+
+
+Tip: GitHub updated own public key, so I highly recommend re-scan GitHub public keys by `ssh-keyscan github.com  >> ~/.ssh/known_hosts`
+
+## Very quick demo
+
+`layout new reddec/layout-example my-example`
+
+Will ask you questions and generate hello-world HTML page based on your answers.
+
+[![asciicast](https://asciinema.org/a/zDPT7o2sbxOjPHoNd5z0qnxvG.png)](https://asciinema.org/a/zDPT7o2sbxOjPHoNd5z0qnxvG)
+
+
 ## Architecture
 
 ```mermaid
@@ -55,7 +69,7 @@ Once you executes `layout new https://example.com/reddec/example my-example`:
    repository `example` owned by `reddec`.
 2. (optionally) `layout` negotiates authorization protocols being aware of configuration in `.gitconfig`
 3. `layout`  makes shallow (depth 1) clone of repo to a temporary directory
-4. `layout` reads `manifests.yaml` and asks questions from user
+4. `layout` reads `layout.yaml` and asks questions from user
 5. `layout` creates destination directory (`my-example`) and copies data from `content` directory from cloned repo as-is
 6. `layout` executes `before` hooks
 7. `layout` renders file names and removes files and directories with empty names
@@ -89,7 +103,7 @@ expressions.
 
 Example:
 
-_manifest.yaml_
+_layout.yaml_
 
 ```yaml
 prompts:
@@ -112,7 +126,7 @@ In case `ask_name` set to `false` the hook **will fail** because in hook conditi
 
 To fix it, you may update manifest with defaults variables:
 
-_manifest.yaml_
+_layout.yaml_
 
 ```yaml
 default:
