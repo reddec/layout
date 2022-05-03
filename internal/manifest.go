@@ -25,7 +25,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"layout/internal/ui"
+	"github.com/reddec/layout/internal/ui"
 
 	"github.com/Masterminds/semver"
 	"github.com/davecgh/go-spew/spew"

@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"os"
 
-	"layout/cmd/layout/commands"
+	"github.com/reddec/layout/cmd/layout/commands"
 
 	"github.com/jessevdk/go-flags"
 )

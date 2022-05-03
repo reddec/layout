@@ -25,8 +25,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"layout/internal/ui"
-	"layout/internal/ui/simple"
+	"github.com/reddec/layout/internal/ui"
+	"github.com/reddec/layout/internal/ui/simple"
 
 	"github.com/go-git/go-git/v5"
 )

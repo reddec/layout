@@ -1,4 +1,4 @@
-module layout
+module github.com/reddec/layout
 
 go 1.18
 

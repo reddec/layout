@@ -20,7 +20,7 @@ import (
 	"context"
 	"strings"
 
-	"layout/internal/ui"
+	"github.com/reddec/layout/internal/ui"
 )
 
 func (p Prompt) question() string {

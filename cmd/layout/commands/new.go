@@ -22,10 +22,10 @@ import (
 	"os"
 	"os/signal"
 
-	"layout/internal"
-	"layout/internal/ui"
-	"layout/internal/ui/nice"
-	"layout/internal/ui/simple"
+	"github.com/reddec/layout/internal"
+	"github.com/reddec/layout/internal/ui"
+	"github.com/reddec/layout/internal/ui/nice"
+	"github.com/reddec/layout/internal/ui/simple"
 )
 
 type NewCommand struct {
