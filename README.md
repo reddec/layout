@@ -1,6 +1,6 @@
 # Layout
 
-Generate new project from layout. Supports typed user-input, hooks, and conditions. 
+Generate new project from layout. Supports typed user-input, hooks, and conditions.
 
 Inspired by  [cookiecutter](https://github.com/cookiecutter/cookiecutter), [yeoman](https://yeoman.io), and Ansible.
 
@@ -25,7 +25,8 @@ Will ask you questions and generate hello-world HTML page based on your answers.
 **Brew**: `brew install reddec/tap/layout`
 
 
-> Tip: GitHub times-to-time updates public key, so I highly recommend re-scan GitHub public keys by `ssh-keyscan github.com  >> ~/.ssh/known_hosts`
+> Tip: GitHub times-to-time updates public key, so I highly recommend re-scan GitHub public keys
+> by `ssh-keyscan github.com  >> ~/.ssh/known_hosts`
 
 ## Motivation
 
@@ -64,7 +65,6 @@ This project is stands on open-source atlantis shoulders:
 That's why [license](LICENSE) for the project is Apache 2.0 which means that you may use code as you wish but please
 state changes (for legal details please read LICENSE file).
 
-
 ## Architecture
 
 ```mermaid
@@ -93,25 +93,51 @@ Once you executes `layout new https://example.com/reddec/example my-example`:
 9. `layout` executes `after` hooks
 10. done
 
-> In reality, `layout` will first to resolve URL as local directory, as abbreviation,
-> and at last will decide go to remote URL
+> In reality, `layout` will first try to resolve URL as local directory, as abbreviation,
+> and only at last it will decide go to remote URL
 
 By default, for GitHub repositories host and protocol not needed. For example, instead
 of `layout new https://github.com/reddec/example my-example` we can use `layout new reddec/example my-example`.
 See [configuration](#configuration) for details.
 
-## Tengo
+## Layout structure
 
-Helpers:
+Each repository should contain:
 
-- `has(seq, opt) -> bool` returns true if `seq` contains value `opt`. Mostly used for checking selected options (
-  type: `list`)
+- `layout.yaml` - main manifest file
+- `content` - content directory which will be copied to the destination
 
-## Magic variables
+### Manifest
 
-- `dirname` (usage: `{{.dirname}}`) - base name of destination directory, commonly used as project name
+#### Computed
 
-## Defaults
+The `computed:` invoked after user input and can contain conditions.
+Most often it could be useful for defining re-usable variable which depends on user-input. For example:
+
+```yaml
+prompts:
+  - var: owner
+  - var: repo
+computed:
+  - var: github_url
+    value: "https://github.com/{{.owner}}/{{.repo}}"
+```
+
+**Note**: in case variable `value` is string, then content of the field will be rendered as template. Otherwise, it will
+be used as-is.
+
+```yaml
+prompts:
+  - var: owner
+  - var: repo
+computed:
+  - var: options
+    value:
+      - 1234
+      - "option {{.repo}}" # <-- will be used as-is with brackets since value content is array, not string
+```
+
+#### Defaults
 
 The `default:` section is similar to `computed`, however, invoked before user input and can not contain conditions.
 Most often it could be useful together with conditional include to prevent excluded variables be undefined in
@@ -158,6 +184,25 @@ after:
     when: name != ""
 ```
 
+Rules of rendering value in `default` section is the same as in [`computed`](#computed).
+
+### Helpers
+
+#### Tengo functions
+
+Mainly used in conditions (aka `when`).
+
+Helpers:
+
+- `has(seq, opt) -> bool` returns true if `seq` contains value `opt`. Mostly used for checking selected options (
+  type: `list`)
+
+#### Magic variables
+
+Could be used everywhere.
+
+- `dirname` (usage: `{{.dirname}}`) - base name of destination directory, commonly used as project name
+
 ## Configuration
 
 The global configuration file defines user-wide settings such as: abbreviations or default repository template.
@@ -191,7 +236,6 @@ abbreviations:
 
 Check [roadmap](#roadmap) for upcoming features.
 
-
 ## Security and privacy
 
 **Privacy**: we (authors of layout) do not collect, process or transmit anything related to your activities to our or
@@ -209,7 +253,6 @@ problem, however:
 - (paranoid) execute layout in minimal sandbox environment such as docker or kvm and copy result data to the host.
 
 See [roadmap](#roadmap) for planning related features.
-
 
 ## Roadmap
 
