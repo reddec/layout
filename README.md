@@ -103,3 +103,37 @@ after:
   - run: echo Hello {{.name}}
     when: name != ""
 ```
+
+## Configuration
+
+The global configuration file defines user-wide settings such as: abbreviations or default repository template. 
+
+If `--config, -c` not provided, the global configuration file will be used which is located under `<user config dir>/layout/layout.yaml`.
+You may check actual location by command `layout show config-file`.
+
+Specifically:
+
+* On Unix systems, `$XDG_CONFIG_HOME/layout/layout.yaml` or `$HOME/.config` (if `$XDG_CONFIG_HOME` not set).
+* On Darwin (Mac), `$HOME/Library/Application Support/layout/layout.yaml`
+* On Windows, `%AppData%/layout/layout.yaml`
+* On Plan 9, `$home/lib/layout/layout.yaml`
+
+Currently, it supports:
+
+* `abbreviations`: map of string -> template values where key is repo shorthand and template is string with `{0}`
+which will be replaced to the repo details. You may use abbreviations as `<abbr>:<owner>/<repo>`
+* `default`: template for repository without shorthand, default (if not set) is `git@github.com:{0}.git`.
+
+Example:
+
+```yaml
+default: "git@gitlab.com:{0}.git" # sets default repo to GitLab instead of GitHub. Could be used as some-owner/some-repo
+abbreviations:
+  ex: "ssh://git@git.example.com/{0}.git" # could be used as ex:some-owner/some-repo
+```
+
+Planning features:
+
+- global default values
+- global before/after hooks
+
