@@ -244,6 +244,44 @@ func TestAsk(t *testing.T) {
 	})
 }
 
+func TestComputed(t *testing.T) {
+	t.Run("computed works", func(t *testing.T) {
+		c := Computed{
+			Var:   "foo",
+			Value: "foo {{.bar}}",
+		}
+		state := make(map[string]interface{})
+		state["bar"] = 123
+		err := c.compute(context.Background(), state)
+		require.NoError(t, err)
+		require.Contains(t, state, "foo")
+		assert.Equal(t, "foo 123", state["foo"])
+	})
+
+	t.Run("skipped computed not rendered at all", func(t *testing.T) {
+		c := Computed{
+			Var:   "foo",
+			Value: "foo {{.unknown}}",
+			When:  "false",
+		}
+		state := make(map[string]interface{})
+		err := c.compute(context.Background(), state)
+		require.NoError(t, err)
+		require.NotContains(t, state, "foo")
+	})
+
+	t.Run("non-string values used as-is", func(t *testing.T) {
+		c := Computed{
+			Var:   "foo",
+			Value: 123456,
+		}
+		state := make(map[string]interface{})
+		err := c.compute(context.Background(), state)
+		require.NoError(t, err)
+		require.Equal(t, 123456, state["foo"])
+	})
+}
+
 func TestCondition_Eval(t *testing.T) {
 	t.Run("helper 'has' works", func(t *testing.T) {
 		ok, err := Condition(`has(options, "alice")`).Eval(context.Background(), map[string]interface{}{

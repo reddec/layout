@@ -61,10 +61,14 @@ type Default struct {
 }
 
 type Hook struct {
-	Label  string // optional message which will displayed during execution. If nothing set, then nothing will be shown
+	Runnable `yaml:",inline"`
+	Label    string // optional message which will displayed during execution. If nothing set, then nothing will be shown
+	When     Condition
+}
+
+type Runnable struct {
 	Run    string // templated, shell like (mvdan.cc/sh)
 	Script string // path to script (executable), relative to manifest, content templated
-	When   Condition
 }
 
 type VarType string

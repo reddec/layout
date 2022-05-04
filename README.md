@@ -300,6 +300,7 @@ See [roadmap](#roadmap) for planning related features.
 - global default values
 - global before/after hooks
 - globally disable hooks
+- compute variables by script
 
 #### Far plans
 
