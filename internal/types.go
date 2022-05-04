@@ -68,7 +68,7 @@ type Hook struct {
 
 type Runnable struct {
 	Run    string // templated, shell like (mvdan.cc/sh)
-	Script string // path to script (executable), relative to manifest, content templated
+	Script string // path to script (executable), relative to manifest, content templated. It has limited support for shell execution, and designed for direct script invocation: <script> [args...]
 }
 
 type VarType string

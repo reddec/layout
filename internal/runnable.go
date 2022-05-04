@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -32,20 +31,19 @@ import (
 
 // execute hook as script (priority) or inline shell. Shell is platform-independent, thanks to mvdan.cc/sh.
 func (h Runnable) execute(ctx context.Context, state map[string]interface{}, workDir string, layoutFS string) error {
-	if h.Script != "" {
-		return h.executeScript(ctx, state, workDir, layoutFS)
-	}
-	return h.executeInline(ctx, state, workDir)
-}
-
-// execute inline (run) shell script.
-func (h Runnable) executeInline(ctx context.Context, state map[string]interface{}, workDir string) error {
 	cp, err := h.render(state)
 	if err != nil {
 		return fmt.Errorf("render hook: %w", err)
 	}
+	if cp.Script != "" {
+		return cp.executeScript(ctx, state, workDir, layoutFS)
+	}
+	return cp.executeInline(ctx, state, workDir)
+}
 
-	script, err := syntax.NewParser().Parse(strings.NewReader(cp.Run), "")
+// execute inline (run) shell script.
+func (h Runnable) executeInline(ctx context.Context, state map[string]interface{}, workDir string) error {
+	script, err := syntax.NewParser().Parse(strings.NewReader(h.Run), "")
 	if err != nil {
 		return fmt.Errorf("parse script: %w", err)
 	}
@@ -59,52 +57,76 @@ func (h Runnable) executeInline(ctx context.Context, state map[string]interface{
 }
 
 // render script to temporary file and execute it. Automatically sets +x (executable) flag to file.
+// It CAN support more or less complex shell execution, however, it designed for direct script invocation: <script> [args...]
 func (h Runnable) executeScript(ctx context.Context, state map[string]interface{}, workDir string, layoutFS string) error {
-	scriptContent, err := ioutil.ReadFile(filepath.Join(layoutFS, path.Clean(h.Script)))
+	parsedCommand, err := syntax.NewParser().Parse(strings.NewReader(h.Script), "")
 	if err != nil {
-		return fmt.Errorf("read hook script content: %w", err)
+		return fmt.Errorf("parse script invokation: %w", err)
+	}
+	var callExpr *syntax.CallExpr
+	for _, stmt := range parsedCommand.Stmts {
+		if call, ok := stmt.Cmd.(*syntax.CallExpr); ok && len(call.Args) > 0 {
+			callExpr = call
+			break
+		}
 	}
 
-	newScriptContent, err := render(string(scriptContent), state)
+	if callExpr != nil {
+		// render script content and copy it to temp dir
+
+		scriptContent, err := ioutil.ReadFile(filepath.Join(layoutFS, path.Clean(assemblePathToCommand(callExpr))))
+		if err != nil {
+			return fmt.Errorf("read hook script content: %w", err)
+		}
+
+		newScriptContent, err := render(string(scriptContent), state)
+		if err != nil {
+			return fmt.Errorf("render hook script content: %w", err)
+		}
+
+		f, err := os.CreateTemp("", "")
+		if err != nil {
+			return fmt.Errorf("create temp file: %w", err)
+		}
+		defer os.RemoveAll(f.Name())
+		defer f.Close()
+
+		if _, err := f.WriteString(newScriptContent); err != nil {
+			return fmt.Errorf("write rendered hook content: %w", err)
+		}
+
+		if err := f.Close(); err != nil {
+			return fmt.Errorf("close script: %w", err)
+		}
+
+		if err := os.Chmod(f.Name(), 0700); err != nil {
+			return fmt.Errorf("mark script as executable: %w", err)
+		}
+
+		// mock call in expression
+		callExpr.Args[0].Parts[0] = &syntax.Lit{Value: f.Name()}
+	}
+
+	runner, err := interp.New(interp.Dir(workDir), interp.StdIO(nil, os.Stdout, os.Stderr))
 	if err != nil {
-		return fmt.Errorf("render hook script content: %w", err)
+		return fmt.Errorf("create script runner: %w", err)
 	}
 
-	f, err := os.CreateTemp("", "")
-	if err != nil {
-		return fmt.Errorf("create temp file: %w", err)
-	}
-	defer os.RemoveAll(f.Name())
-	defer f.Close()
-
-	if _, err := f.WriteString(newScriptContent); err != nil {
-		return fmt.Errorf("write rendered hook content: %w", err)
-	}
-
-	if err := f.Close(); err != nil {
-		return fmt.Errorf("close script: %w", err)
-	}
-
-	if err := os.Chmod(f.Name(), 0700); err != nil {
-		return fmt.Errorf("mark script as executable: %w", err)
-	}
-
-	cmd := exec.CommandContext(ctx, f.Name())
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Dir = workDir
-
-	return cmd.Run()
+	return runner.Run(ctx, parsedCommand)
 }
 
-// render templated variables: run
+// render templated variables: run, script
 func (h Runnable) render(state map[string]interface{}) (Runnable, error) {
 	if v, err := render(h.Run, state); err != nil {
 		return h, fmt.Errorf("render run: %w", err)
 	} else {
 		h.Run = v
 	}
-
+	if v, err := render(h.Script, state); err != nil {
+		return h, fmt.Errorf("render script: %w", err)
+	} else {
+		h.Script = v
+	}
 	return h, nil
 }
 
@@ -114,4 +136,17 @@ func (h Runnable) what() string {
 		return h.Script
 	}
 	return h.Run
+}
+
+func assemblePathToCommand(stmt *syntax.CallExpr) string {
+	var ans []string = make([]string, 0, len(stmt.Args[0].Parts))
+	for _, p := range stmt.Args[0].Parts {
+		switch v := p.(type) {
+		case *syntax.SglQuoted:
+			ans = append(ans, v.Value)
+		case *syntax.Lit:
+			ans = append(ans, v.Value)
+		}
+	}
+	return strings.Join(ans, "")
 }

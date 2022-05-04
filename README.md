@@ -117,7 +117,7 @@ Check examples in:
 **absolute minimal example of manifest:**
 
 ```yaml
-{}
+{ }
 ```
 
 Yes, empty object is valid manifest.
@@ -219,6 +219,42 @@ after:
 ```
 
 Rules of rendering value in `default` section is the same as in [`computed`](#computed).
+
+### Hooks
+
+Hooks can be defined through inline portable shell or through templated script.
+
+* `before` hooks executed with resolved state (after user input and computed variables), before rendering paths and
+  content
+* `after` hooks executed after content rendered
+
+Optionally, a `label` could be defined to show human-friendly text during execution.
+
+Working directory for script and inline always inside destination directory. For script invocation, path to script is
+relative to layout content.
+
+Example:
+
+```yaml
+#...
+before:
+  # inline script
+  - label: Save current date
+    run: date > created.txt
+after:
+  # file script
+  - label: Say hello
+    script: hooks/hello.sh "{{.dirname}}"
+#...
+```
+
+Content of `hooks/hello.sh` could be (`foo` should be defined):
+
+```shell
+#!/bin/sh
+
+wall Hello "{{.foo}}" "$1"
+```
 
 ### Helpers
 
