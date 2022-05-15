@@ -1,0 +1,47 @@
+title: Demo layout
+version: ~1
+before:
+  - run: date > created.txt
+after:
+  - run: touch extra
+    when: extra
+  - run: echo "# {{.name}} - {{.project}}" >> README.md # just for demonstration, better just create README.md file
+    label: generate readme
+  - script: hooks/add-test.sh
+ignore:
+  - "**/ignore*"
+default:
+  - var: project
+    value: "The mega project"
+prompts:
+  - var: name
+    label: Project name
+    default: "{{.dirname}}"
+  - var: year
+    type: int
+  - var: foo
+    label: Foo value
+    options:
+      - alice
+      - bob
+      - the foo
+    default: alice
+  - var: extra
+    label: Enable extra
+    type: bool
+    default: "false"
+  - include: http.yaml
+    when: extra
+  - var: os
+    label: Supported OS
+    type: list
+    options:
+      - Linux
+      - Windows
+      - MacOSx
+computed:
+  - var: bar
+    value: "{{.foo}} as bar"
+  - var: bar_extra
+    value: "extra bar"
+    when: extra

@@ -1,0 +1,71 @@
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - arm64
+      - amd64
+    flags:
+      - -trimpath
+    binary: layout
+    main: ./cmd/layout
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+dockers:
+  - image_templates:
+      - "ghcr.io/reddec/{{ .ProjectName }}:{{ .Version }}-amd64"
+    use: buildx
+    dockerfile: Dockerfile.release
+    build_flag_templates:
+      - "--platform=linux/amd64"
+  - image_templates:
+      - "ghcr.io/reddec/{{ .ProjectName }}:{{ .Version }}-arm64v8"
+    use: buildx
+    goarch: arm64
+    dockerfile: Dockerfile.release
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
+docker_manifests:
+  - name_template: "ghcr.io/reddec/{{ .ProjectName }}:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/reddec/{{ .ProjectName }}:{{ .Version }}-amd64"
+      - "ghcr.io/reddec/{{ .ProjectName }}:{{ .Version }}-arm64v8"
+  - name_template: "ghcr.io/reddec/{{ .ProjectName }}:latest"
+    image_templates:
+      - "ghcr.io/reddec/{{ .ProjectName }}:{{ .Version }}-amd64"
+      - "ghcr.io/reddec/{{ .ProjectName }}:{{ .Version }}-arm64v8"
+brews:
+  - tap:
+      owner: reddec
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    folder: Formula
+    homepage:  https://github.com/reddec/layout
+    description: Tool for creating new project from template
+    license: Apache-2.0
+    test: |
+      system "#{bin}/layout --help"
+    install: |-
+      bin.install "layout"
+nfpms:
+  - formats:
+      - apk
+      - deb
+      - rpm
+    maintainer: Aleksandr Baryshnikov <owner@reddec.net>
+    description: |-
+      Tool for creating new project from template
+    license: Apache 2.0
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

@@ -1,0 +1,5 @@
+.idea
+/dist
+/build
+.DS_Store
+/demo
