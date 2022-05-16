@@ -30,19 +30,19 @@ import (
 )
 
 // execute hook as script (priority) or inline shell. Shell is platform-independent, thanks to mvdan.cc/sh.
-func (h Runnable) execute(ctx context.Context, state map[string]interface{}, workDir string, layoutFS string) error {
-	cp, err := h.render(state)
+func (h Runnable) execute(ctx context.Context, renderContext *renderContext, workDir string, layoutFS string) error {
+	cp, err := h.render(renderContext)
 	if err != nil {
 		return fmt.Errorf("render hook: %w", err)
 	}
 	if cp.Script != "" {
-		return cp.executeScript(ctx, state, workDir, layoutFS)
+		return cp.executeScript(ctx, renderContext, workDir, layoutFS)
 	}
-	return cp.executeInline(ctx, state, workDir)
+	return cp.executeInline(ctx, workDir)
 }
 
 // execute inline (run) shell script.
-func (h Runnable) executeInline(ctx context.Context, state map[string]interface{}, workDir string) error {
+func (h Runnable) executeInline(ctx context.Context, workDir string) error {
 	script, err := syntax.NewParser().Parse(strings.NewReader(h.Run), "")
 	if err != nil {
 		return fmt.Errorf("parse script: %w", err)
@@ -58,7 +58,7 @@ func (h Runnable) executeInline(ctx context.Context, state map[string]interface{
 
 // render script to temporary file and execute it. Automatically sets +x (executable) flag to file.
 // It CAN support more or less complex shell execution, however, it designed for direct script invocation: <script> [args...]
-func (h Runnable) executeScript(ctx context.Context, state map[string]interface{}, workDir string, layoutFS string) error {
+func (h Runnable) executeScript(ctx context.Context, renderContext *renderContext, workDir string, layoutFS string) error {
 	parsedCommand, err := syntax.NewParser().Parse(strings.NewReader(h.Script), "")
 	if err != nil {
 		return fmt.Errorf("parse script invokation: %w", err)
@@ -79,7 +79,7 @@ func (h Runnable) executeScript(ctx context.Context, state map[string]interface{
 			return fmt.Errorf("read hook script content: %w", err)
 		}
 
-		newScriptContent, err := render(string(scriptContent), state)
+		newScriptContent, err := renderContext.Render(string(scriptContent))
 		if err != nil {
 			return fmt.Errorf("render hook script content: %w", err)
 		}
@@ -116,13 +116,13 @@ func (h Runnable) executeScript(ctx context.Context, state map[string]interface{
 }
 
 // render templated variables: run, script
-func (h Runnable) render(state map[string]interface{}) (Runnable, error) {
-	if v, err := render(h.Run, state); err != nil {
+func (h Runnable) render(renderer *renderContext) (Runnable, error) {
+	if v, err := renderer.Render(h.Run); err != nil {
 		return h, fmt.Errorf("render run: %w", err)
 	} else {
 		h.Run = v
 	}
-	if v, err := render(h.Script, state); err != nil {
+	if v, err := renderer.Render(h.Script); err != nil {
 		return h, fmt.Errorf("render script: %w", err)
 	} else {
 		h.Script = v

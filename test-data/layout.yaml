@@ -1,5 +1,9 @@
 title: Demo layout
 version: ~1
+# # Delimiters can be changed from {{/}} to anything else
+# delimiters:
+#   open: "[["
+#   close: "]]"
 before:
   - run: date > created.txt
 after:

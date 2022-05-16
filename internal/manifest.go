@@ -17,6 +17,7 @@ limitations under the License.
 package internal
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/fs"
@@ -24,7 +25,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/reddec/layout/internal/ui"
 
 	"github.com/Masterminds/semver"
@@ -59,19 +62,20 @@ func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir s
 	var state = make(map[string]interface{})
 	// set magic variables
 	state[MagicVarDir] = filepath.Base(destinationDir)
+	renderer := newRenderContext(state).Delimiters(m.Delimiters.Open, m.Delimiters.Close)
 
 	for i, c := range m.Default {
-		if err := c.compute(state); err != nil {
+		if err := c.compute(renderer); err != nil {
 			return fmt.Errorf("set default value #%d (%s): %w", i, c.Var, err)
 		}
 	}
 
-	if err := askState(ctx, display, m.Prompts, "", layoutDir, state, once); err != nil {
+	if err := askState(ctx, display, m.Prompts, "", layoutDir, renderer, once); err != nil {
 		return fmt.Errorf("get values for prompts: %w", err)
 	}
 
 	for i, c := range m.Computed {
-		if err := c.compute(ctx, state); err != nil {
+		if err := c.compute(ctx, renderer); err != nil {
 			return fmt.Errorf("compute value #%d (%s): %w", i, c.Var, err)
 		}
 	}
@@ -99,7 +103,7 @@ func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir s
 		if err := h.display(ctx, display.Info); err != nil {
 			return fmt.Errorf("display pre-generate hook #%d (%s): %w", i, h.what(), err)
 		}
-		if err := h.execute(ctx, state, destinationDir, layoutDir); err != nil {
+		if err := h.execute(ctx, renderer, destinationDir, layoutDir); err != nil {
 			return fmt.Errorf("execute pre-generate hook #%d (%s): %w", i, h.what(), err)
 		}
 	}
@@ -107,7 +111,7 @@ func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir s
 	// render template
 	// rename files and dirs, empty entries removed
 	err := walk(destinationDir, func(dir string, d fs.DirEntry) error {
-		renderedName, err := render(d.Name(), state)
+		renderedName, err := renderer.Render(d.Name())
 		if err != nil {
 			return err
 		}
@@ -141,7 +145,7 @@ func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir s
 		if err != nil {
 			return fmt.Errorf("read content of %s: %w", path, err)
 		}
-		data, err := render(string(templateData), state)
+		data, err := renderer.Render(string(templateData))
 		if err != nil {
 			return fmt.Errorf("render %s: %w", path, err)
 		}
@@ -161,7 +165,7 @@ func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir s
 		if err := h.display(ctx, display.Info); err != nil {
 			return fmt.Errorf("display post-generate hook #%d (%s): %w", i, h.what(), err)
 		}
-		if err := h.execute(ctx, state, destinationDir, layoutDir); err != nil {
+		if err := h.execute(ctx, renderer, destinationDir, layoutDir); err != nil {
 			return fmt.Errorf("execute post-generate hook #%d (%s): %w", i, h.what(), err)
 		}
 	}
@@ -228,4 +232,54 @@ func (m *Manifest) isSupportedVersion(currentVersion string) (bool, error) {
 		return false, fmt.Errorf("parse version constraint in manifest: %w", err)
 	}
 	return constraint.Check(version), nil
+}
+
+func newRenderContext(initialState map[string]interface{}) *renderContext {
+	return &renderContext{
+		state: initialState,
+		open:  "{{",
+		close: "}}",
+	}
+}
+
+// renderContext aggregates required information for rendering templates.
+type renderContext struct {
+	state map[string]interface{}
+	open  string
+	close string
+}
+
+// Delimiters which will be used in template. Default is {{ and }}.
+func (r *renderContext) Delimiters(open, close string) *renderContext {
+	if open != "" {
+		r.open = open
+	}
+	if close != "" {
+		r.close = close
+	}
+	return r
+}
+
+// State of context with all known variables.
+func (r *renderContext) State() map[string]interface{} {
+	return r.state
+}
+
+// Save value in the state
+func (r *renderContext) Save(key string, value interface{}) {
+	if r.state == nil {
+		r.state = make(map[string]interface{})
+	}
+	r.state[key] = value
+}
+
+// Render go-template value with state as context in memory.
+func (r *renderContext) Render(value string) (string, error) {
+	p, err := template.New("").Delims(r.open, r.close).Funcs(sprig.TxtFuncMap()).Parse(value)
+	if err != nil {
+		return "", err
+	}
+	var out bytes.Buffer
+	err = p.Execute(&out, r.state)
+	return out.String(), err
 }

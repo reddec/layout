@@ -42,7 +42,7 @@ func TestRunnable(t *testing.T) {
 		run := Runnable{
 			Run: "echo -n {{.foo}} > inline.txt",
 		}
-		err := run.execute(ctx, state, tmpDir, "")
+		err := run.execute(ctx, newRenderContext(state), tmpDir, "")
 		require.NoError(t, err)
 		require.FileExists(t, filepath.Join(tmpDir, "inline.txt"))
 		requireContent(t, "123", filepath.Join(tmpDir, "inline.txt"))
@@ -62,7 +62,7 @@ echo -n {{.foo}} > hook.txt
 		run := Runnable{
 			Script: "'h o o k.sh'",
 		}
-		err = run.execute(ctx, state, tmpDir, hooksDir)
+		err = run.execute(ctx, newRenderContext(state), tmpDir, hooksDir)
 		require.NoError(t, err)
 		require.FileExists(t, filepath.Join(tmpDir, "hook.txt"))
 		requireContent(t, "123", filepath.Join(tmpDir, "hook.txt"))
@@ -82,7 +82,7 @@ echo -n "$1" > hook2.txt
 		run := Runnable{
 			Script: "hook.sh '{{.foo}}'",
 		}
-		err = run.execute(ctx, state, tmpDir, hooksDir)
+		err = run.execute(ctx, newRenderContext(state), tmpDir, hooksDir)
 		require.NoError(t, err)
 		require.FileExists(t, filepath.Join(tmpDir, "hook2.txt"))
 		requireContent(t, "123", filepath.Join(tmpDir, "hook2.txt"))

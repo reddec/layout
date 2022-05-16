@@ -52,7 +52,7 @@ func TestAsk(t *testing.T) {
 			{Var: "free-list", Type: VarList},
 		}
 		state := make(map[string]interface{})
-		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state, true)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", newRenderContext(state), true)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -73,7 +73,7 @@ func TestAsk(t *testing.T) {
 			{Var: "int", Type: VarInt, Default: "123"},
 		}
 		state := make(map[string]interface{})
-		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state, true)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", newRenderContext(state), true)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -91,7 +91,7 @@ func TestAsk(t *testing.T) {
 			{Var: "string", Type: VarString, Options: []string{"abc", "def"}},
 		}
 		state := make(map[string]interface{})
-		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state, true)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", newRenderContext(state), true)
 		require.Error(t, err)
 	})
 
@@ -104,7 +104,7 @@ func TestAsk(t *testing.T) {
 			{Var: "string", Type: VarString, Options: []string{"abc", "def"}},
 		}
 		state := make(map[string]interface{})
-		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state, true)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", newRenderContext(state), true)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -127,7 +127,7 @@ func TestAsk(t *testing.T) {
 			{Var: "templated", Type: VarString, Default: "abc {{.string}}"},
 		}
 		state := make(map[string]interface{})
-		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state, true)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", newRenderContext(state), true)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -149,7 +149,7 @@ func TestAsk(t *testing.T) {
 			{Var: "skipped", Type: VarString, When: "foo < 100"},
 		}
 		state := make(map[string]interface{})
-		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state, true)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", newRenderContext(state), true)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -172,7 +172,7 @@ func TestAsk(t *testing.T) {
 			{Var: "skipped", Type: VarString, When: "foo < 100"},
 		}
 		state := make(map[string]interface{})
-		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state, true)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", newRenderContext(state), true)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -210,7 +210,7 @@ func TestAsk(t *testing.T) {
 			{Include: "dir/xxx.yaml"},
 		}
 		state := make(map[string]interface{})
-		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", source, state, true)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", source, newRenderContext(state), true)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -231,7 +231,7 @@ func TestAsk(t *testing.T) {
 			{Var: "foo", Type: VarInt},
 		}
 		state := make(map[string]interface{})
-		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", state, false)
+		err := askState(context.Background(), simple.New(bufio.NewReader(input), io.Discard), prompts, "", "", newRenderContext(state), false)
 		require.NoError(t, err)
 
 		for k, v := range expected {
@@ -252,7 +252,7 @@ func TestComputed(t *testing.T) {
 		}
 		state := make(map[string]interface{})
 		state["bar"] = 123
-		err := c.compute(context.Background(), state)
+		err := c.compute(context.Background(), newRenderContext(state))
 		require.NoError(t, err)
 		require.Contains(t, state, "foo")
 		assert.Equal(t, "foo 123", state["foo"])
@@ -265,7 +265,7 @@ func TestComputed(t *testing.T) {
 			When:  "false",
 		}
 		state := make(map[string]interface{})
-		err := c.compute(context.Background(), state)
+		err := c.compute(context.Background(), newRenderContext(state))
 		require.NoError(t, err)
 		require.NotContains(t, state, "foo")
 	})
@@ -276,7 +276,7 @@ func TestComputed(t *testing.T) {
 			Value: 123456,
 		}
 		state := make(map[string]interface{})
-		err := c.compute(context.Background(), state)
+		err := c.compute(context.Background(), newRenderContext(state))
 		require.NoError(t, err)
 		require.Equal(t, 123456, state["foo"])
 	})

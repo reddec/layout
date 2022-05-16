@@ -199,6 +199,25 @@ For now, I suggest pinning major version only: `~1`. `layout` is following seman
 one major version are backward compatible (manifest designed for `1.0.0` will work normally even in `layout`
 version `1.9.5`, but without guarantees for `2.0.0`).
 
+#### Delimiters
+
+Template delimiters could be overridden by in `delimiters` section. Defaults are `{{` (open), `}}` (close).
+Could be useful in case you are trying to render Go templates.
+
+Example:
+
+```yaml
+# ...
+delimiters:
+  open: '[['
+  close: ']]'
+# ...
+computed:
+  - var: foo
+    value: "[[.dirname]]"
+# ...
+```
+
 #### Prompts
 
 Prompts are list of variables which should be asked from user.

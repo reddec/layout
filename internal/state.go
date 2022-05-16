@@ -17,7 +17,6 @@ limitations under the License.
 package internal
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -26,18 +25,15 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"text/template"
 
 	"github.com/reddec/layout/internal/ui"
-
-	"github.com/Masterminds/sprig/v3"
 
 	"github.com/d5/tengo/v2"
 	"gopkg.in/yaml.v2"
 )
 
 // Ask questions to user and generate state. Base file initially equal to manifest file and used to resolve relative includes.
-func askState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile string, layoutDir string, state map[string]interface{}, once bool) error {
+func askState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile string, layoutDir string, renderContext *renderContext, once bool) error {
 	for i, prompt := range prompts {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -45,7 +41,7 @@ func askState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile str
 
 		// we may skip the prompt in case condition is not empty and returns non-true
 		if prompt.When != "" {
-			execute, err := prompt.When.Eval(ctx, state)
+			execute, err := prompt.When.Eval(ctx, renderContext.State())
 			if err != nil {
 				return fmt.Errorf("condition in step %d in %s: %w", i, baseFile, err)
 			}
@@ -55,7 +51,7 @@ func askState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile str
 		}
 
 		// before processing prompt further we have to render all templated fields
-		prompt, err := prompt.render(state)
+		prompt, err := prompt.render(renderContext)
 		if err != nil {
 			return fmt.Errorf("render step %d in %s: %w", i, baseFile, err)
 		}
@@ -66,7 +62,7 @@ func askState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile str
 			if err != nil {
 				return fmt.Errorf("step %d, file %s, include %s: %w", i, baseFile, prompt.Include, err)
 			}
-			if err := askState(ctx, display, children, childFile, layoutDir, state, once); err != nil {
+			if err := askState(ctx, display, children, childFile, layoutDir, renderContext, once); err != nil {
 				return fmt.Errorf("step %d, file %s, process include %s: %w", i, baseFile, prompt.Include, err)
 			}
 			continue
@@ -87,7 +83,7 @@ func askState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile str
 				}
 				continue
 			}
-			state[prompt.Var] = value
+			renderContext.Save(prompt.Var, value)
 			break
 		}
 	}
@@ -160,20 +156,20 @@ func include(includeFile string, baseFile string, layoutFS string) ([]Prompt, st
 }
 
 // render all templated values in render: label, include, default, options.
-func (p Prompt) render(state map[string]interface{}) (Prompt, error) {
-	if v, err := render(p.Label, state); err != nil {
+func (p Prompt) render(renderer *renderContext) (Prompt, error) {
+	if v, err := renderer.Render(p.Label); err != nil {
 		return p, fmt.Errorf("render label: %w", err)
 	} else {
 		p.Label = v
 	}
 
-	if v, err := render(p.Include, state); err != nil {
+	if v, err := renderer.Render(p.Include); err != nil {
 		return p, fmt.Errorf("render include: %w", err)
 	} else {
 		p.Include = v
 	}
 
-	if v, err := render(p.Default, state); err != nil {
+	if v, err := renderer.Render(p.Default); err != nil {
 		return p, fmt.Errorf("render default: %w", err)
 	} else {
 		p.Default = v
@@ -181,7 +177,7 @@ func (p Prompt) render(state map[string]interface{}) (Prompt, error) {
 
 	options := make([]string, 0, len(p.Options))
 	for i, opt := range p.Options {
-		if v, err := render(opt, state); err != nil {
+		if v, err := renderer.Render(opt); err != nil {
 			return p, fmt.Errorf("render option %d: %w", i, err)
 		} else {
 			options = append(options, v)
@@ -190,17 +186,6 @@ func (p Prompt) render(state map[string]interface{}) (Prompt, error) {
 	p.Options = options
 
 	return p, nil
-}
-
-// render is helper for rendering go-template value with state in memory.
-func render(value string, state map[string]interface{}) (string, error) {
-	p, err := template.New("").Funcs(sprig.TxtFuncMap()).Parse(value)
-	if err != nil {
-		return "", err
-	}
-	var out bytes.Buffer
-	err = p.Execute(&out, state)
-	return out.String(), err
 }
 
 // prepares state for Tengo

@@ -23,8 +23,8 @@ import (
 
 // compute variable: render value (if string) and convert it to desired type.
 // If value is not string, it will be returned as-is
-func (c Computed) compute(ctx context.Context, state map[string]interface{}) error {
-	ok, err := c.When.Ok(ctx, state)
+func (c Computed) compute(ctx context.Context, renderer *renderContext) error {
+	ok, err := c.When.Ok(ctx, renderer.State())
 	if err != nil {
 		return fmt.Errorf("evalute condition: %w", err)
 	}
@@ -35,11 +35,11 @@ func (c Computed) compute(ctx context.Context, state map[string]interface{}) err
 
 	stringValue, ok := c.Value.(string)
 	if !ok {
-		state[c.Var] = c.Value
+		renderer.Save(c.Var, c.Value)
 		return nil
 	}
 
-	value, err := render(stringValue, state)
+	value, err := renderer.Render(stringValue)
 	if err != nil {
 		return fmt.Errorf("render value: %w", err)
 	}
@@ -48,20 +48,20 @@ func (c Computed) compute(ctx context.Context, state map[string]interface{}) err
 	if err != nil {
 		return fmt.Errorf("parse value: %w", err)
 	}
-	state[c.Var] = parsed
+	renderer.Save(c.Var, parsed)
 	return nil
 }
 
 // condition-less default variable: render value (if string) and convert it to desired type.
 // If value is not string, it will be returned as-is
-func (d Default) compute(state map[string]interface{}) error {
+func (d Default) compute(renderer *renderContext) error {
 	stringValue, ok := d.Value.(string)
 	if !ok {
-		state[d.Var] = d.Value
+		renderer.Save(d.Var, d.Value)
 		return nil
 	}
 
-	value, err := render(stringValue, state)
+	value, err := renderer.Render(stringValue)
 	if err != nil {
 		return fmt.Errorf("render value: %w", err)
 	}
@@ -70,6 +70,6 @@ func (d Default) compute(state map[string]interface{}) error {
 	if err != nil {
 		return fmt.Errorf("parse value: %w", err)
 	}
-	state[d.Var] = parsed
+	renderer.Save(d.Var, parsed)
 	return nil
 }

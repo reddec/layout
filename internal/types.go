@@ -27,8 +27,12 @@ const (
 )
 
 type Manifest struct {
-	Version  string // minimal layout version (semver). Empty means any version
-	Title    string
+	Version    string // minimal layout version (semver). Empty means any version
+	Title      string
+	Delimiters struct {
+		Open  string
+		Close string
+	} // custom template delimiter for go templates, default is '{{' and '}}'
 	Prompts  []Prompt
 	Default  []Default  // computed values to define internal default values before processing state, useful in case of condition includes to prevent `undefined variable` error
 	Computed []Computed // computed values used to calculate variables after user input
