@@ -398,6 +398,24 @@ after:
 
 Rules of rendering value in `default` section is the same as in [`computed`](#computed).
 
+Defaults also can be defined globally in [configuration](#configuration). Optionally, to make layout portable you may
+use template in default section.
+
+_$XDG_CONFIG_HOME/layout/layout.yaml_
+
+```yaml
+values:
+  country: Global
+```
+
+_layout.yaml_
+
+```yaml
+default:
+  - var: country
+    value: '{{with .country}}{{.}}{{else}}my-default-country{{end}}'
+```
+
 #### Ignore
 
 Ignore list allows you define list of [glob](https://pkg.go.dev/path/filepath#Glob) patterns of paths which should not
@@ -512,7 +530,11 @@ prompts:
 
 ### Configuration
 
-The global configuration file defines user-wide settings such as: abbreviations or default repository template.
+The global configuration file defines user-wide settings such as:
+
+* abbreviations
+* default repository template
+* global default variables
 
 If `--config, -c` not provided, the global configuration file will be used which is located
 under `<user config dir>/layout/layout.yaml`.
@@ -530,6 +552,7 @@ Currently, it supports:
 * `abbreviations`: map of string -> template values where key is repo shorthand and template is string with `{0}`
   which will be replaced to the repo details. You may use abbreviations as `<abbr>:<owner>/<repo>`
 * `default`: template for repository without shorthand, default (if not set) is `git@github.com:{0}.git`.
+* `values`: (v1.2.0+) map of anything where key as name and value is default value (any valid YAML type)
 
 > Hint: you may use air-gap deployment in case you stored bare repository somewhere locally.
 
@@ -539,6 +562,9 @@ Example:
 default: "git@gitlab.com:{0}.git" # sets default repo to GitLab instead of GitHub. Could be used as some-owner/some-repo
 abbreviations:
   ex: "ssh://git@git.example.com/{0}.git" # could be used as ex:some-owner/some-repo
+values:
+  author: RedDec
+  organization: myself
 ```
 
 Check [roadmap](#roadmap) for upcoming features.
@@ -588,7 +614,6 @@ See [roadmap](#roadmap) for planning related features.
     - clone by commit digest
     - disable hooks during cloning, however, it may break all idea of `layout`
 - UX
-    - global default values
     - global before/after hooks
     - globally disable hooks
     - compute variables by script

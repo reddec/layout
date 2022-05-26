@@ -82,15 +82,16 @@ func (cmd NewCommand) Execute([]string) error {
 		fmt.Println("Git:", runtime.FuncForPC(reflect.ValueOf(gitClient).Pointer()).Name())
 	}
 	err = internal.Deploy(ctx, internal.Config{
-		Source:  cmd.Args.URL,
-		Target:  cmd.Args.Dest,
-		Aliases: config.Abbreviations,
-		Default: config.Default,
-		Display: display,
-		Debug:   cmd.Debug,
-		Version: cmd.Version,
-		AskOnce: cmd.AskOnce,
-		Git:     gitClient,
+		Source:   cmd.Args.URL,
+		Target:   cmd.Args.Dest,
+		Aliases:  config.Abbreviations,
+		Default:  config.Default,
+		Defaults: config.Values,
+		Display:  display,
+		Debug:    cmd.Debug,
+		Version:  cmd.Version,
+		AskOnce:  cmd.AskOnce,
+		Git:      gitClient,
 	})
 
 	if err != nil && weCreatedDestination && !cmd.DisableCleanup {

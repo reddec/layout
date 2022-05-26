@@ -25,8 +25,9 @@ import (
 )
 
 type Config struct {
-	Default       string            // pattern for requests without abbreviations
-	Abbreviations map[string]string // abbreviations, (ex: alias:owner/repo), stored as alias => pattern ({0} as placeholder)
+	Default       string                 // pattern for requests without abbreviations
+	Abbreviations map[string]string      // abbreviations, (ex: alias:owner/repo), stored as alias => pattern ({0} as placeholder)
+	Values        map[string]interface{} // global default values
 }
 
 func LoadConfig(file string) (*Config, error) {

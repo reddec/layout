@@ -36,15 +36,16 @@ const (
 
 // Config of layout deployment.
 type Config struct {
-	Source  string            // git URL, shorthand, or path to directory
-	Target  string            // destination directory
-	Aliases map[string]string // aliases (abbreviations) for cloning, values may contain {0} placeholder
-	Default string            // default alias (for cloning without abbreviations, such as owner/repo), value may contain {0} placeholder, default is Github
-	Display ui.UI             // how to interact with user, default is Simple TUI
-	Debug   bool              // enable debug messages and tracing
-	Version string            // current version, used to filter manifests by constraints
-	AskOnce bool              // do not try to ask for user input after wrong value and interrupt deployment
-	Git     gitclient.Client  // Git client, default is gitclient.Auto
+	Source   string                 // git URL, shorthand, or path to directory
+	Target   string                 // destination directory
+	Aliases  map[string]string      // aliases (abbreviations) for cloning, values may contain {0} placeholder
+	Default  string                 // default alias (for cloning without abbreviations, such as owner/repo), value may contain {0} placeholder, default is Github
+	Display  ui.UI                  // how to interact with user, default is Simple TUI
+	Debug    bool                   // enable debug messages and tracing
+	Version  string                 // current version, used to filter manifests by constraints
+	AskOnce  bool                   // do not try to ask for user input after wrong value and interrupt deployment
+	Git      gitclient.Client       // Git client, default is gitclient.Auto
+	Defaults map[string]interface{} // Global default values
 }
 
 func (cfg Config) withDefaults(ctx context.Context) Config {
@@ -107,7 +108,7 @@ func Deploy(ctx context.Context, config Config) error {
 		return fmt.Errorf("manifest version constraint (%s) requires another version of application (current %s)", manifest.Version, config.Version)
 	}
 
-	err = manifest.renderTo(ctx, config.Display, config.Target, projectDir, config.Debug, config.AskOnce)
+	err = manifest.renderTo(ctx, config.Display, config.Target, projectDir, config.Debug, config.AskOnce, config.Defaults)
 	if err != nil {
 		return fmt.Errorf("render: %w", err)
 	}
