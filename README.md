@@ -104,21 +104,24 @@ state any changes (for legal details please read LICENSE file).
 
     Usage:
     layout [OPTIONS] new [new-OPTIONS] [source] [destination]
-    
+
     Help Options:
-    -h, --help                 Show this help message
+    -h, --help                       Show this help message
     
     [new command options]
-    --version=         Override binary version to bypass manifest restriction [$LAYOUT_VERSION]
-    -c, --config=          Path to configuration file, use show config command to locate default location [$LAYOUT_CONFIG]
-    -u, --ui=[nice|simple] UI mode (default: nice) [$LAYOUT_UI]
-    -d, --debug            Enable debug mode [$LAYOUT_DEBUG]
-    -a, --ask-once         Do not retry on wrong user input, good for automation [$LAYOUT_ASK_ONCE]
-    -D, --disable-cleanup  Disable removing created dirs in case of failure [$LAYOUT_DISABLE_CLEANUP]
-    
-    [new command arguments]
-    source:                    URL, abbreviation or path to layout
-    destination:               Destination directory, will be created
+        --version=                   Override binary version to bypass manifest restriction [$LAYOUT_VERSION]
+    -c, --config=                    Path to configuration file, use show config command to locate default location [$LAYOUT_CONFIG]
+    -u, --ui=[nice|simple]           UI mode (default: nice) [$LAYOUT_UI]
+    -d, --debug                      Enable debug mode [$LAYOUT_DEBUG]
+    -a, --ask-once                   Do not retry on wrong user input, good for automation [$LAYOUT_ASK_ONCE]
+    -D, --disable-cleanup            Disable removing created dirs in case of failure [$LAYOUT_DISABLE_CLEANUP]
+    -g, --git=[auto|native|embedded] Git client (default: auto) [$LAYOUT_GIT]
+
+* `-g,--git` (v1.2.0+) specifies git client which should be used:
+    * `native` use native Git binary (must be 2.13+)
+    * `embedded` use Golang native git client (safe mode)
+    * `auto` (default) in case git installed (`git` binary accessible) and git version is 2.13 or higher `native` will
+      be used, otherwise `embedded`
 
 ### Architecture
 
@@ -589,7 +592,7 @@ See [roadmap](#roadmap) for planning related features.
     - global before/after hooks
     - globally disable hooks
     - compute variables by script
-    - allow users use native `git` binary
+    - multiple templates in one repo
 - Delivery
     - apt repository
     - Arch AUR

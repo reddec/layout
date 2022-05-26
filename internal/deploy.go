@@ -25,10 +25,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/reddec/layout/internal/gitclient"
 	"github.com/reddec/layout/internal/ui"
 	"github.com/reddec/layout/internal/ui/simple"
-
-	"github.com/go-git/go-git/v5"
 )
 
 const (
@@ -45,21 +44,25 @@ type Config struct {
 	Debug   bool              // enable debug messages and tracing
 	Version string            // current version, used to filter manifests by constraints
 	AskOnce bool              // do not try to ask for user input after wrong value and interrupt deployment
+	Git     gitclient.Client  // Git client, default is gitclient.Auto
 }
 
-func (cfg Config) withDefaults() Config {
+func (cfg Config) withDefaults(ctx context.Context) Config {
 	if cfg.Default == "" {
 		cfg.Default = defaultRepoTemplate
 	}
 	if cfg.Display == nil {
 		cfg.Display = simple.Default()
 	}
+	if cfg.Git == nil {
+		cfg.Git = gitclient.Auto(ctx)
+	}
 	return cfg
 }
 
 // Deploy layout, which means clone repo, ask for question, and template content.
 func Deploy(ctx context.Context, config Config) error {
-	config = config.withDefaults()
+	config = config.withDefaults(ctx)
 
 	var projectDir string
 
@@ -85,7 +88,7 @@ func Deploy(ctx context.Context, config Config) error {
 		url = strings.ReplaceAll(repoTemplate, "{0}", repo)
 		fallthrough
 	default: // finally all we need is to pull remote repository by URL
-		tmpDir, err := cloneFromGit(ctx, url)
+		tmpDir, err := cloneFromGit(ctx, config.Git, url)
 		if err != nil {
 			return fmt.Errorf("copy project from git %s: %w", url, err)
 		}
@@ -112,20 +115,14 @@ func Deploy(ctx context.Context, config Config) error {
 	return nil
 }
 
-// clones from git repository from default branch with minimal depth (1).
-// Reports progress to STDERR. Supports submodules.
+// clones from git repository into temporary directory.
 // Returned directory should be removed by caller.
-func cloneFromGit(ctx context.Context, url string) (projectDir string, err error) {
+func cloneFromGit(ctx context.Context, client gitclient.Client, url string) (projectDir string, err error) {
 	tmpDir, err := os.MkdirTemp("", "layout-*")
 	if err != nil {
 		return "", fmt.Errorf("create temp dir: %w", err)
 	}
-	_, err = git.PlainCloneContext(ctx, tmpDir, false, &git.CloneOptions{
-		URL:               url,
-		Depth:             1,
-		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-		Progress:          os.Stderr,
-	})
+	err = client(ctx, url, tmpDir)
 	if err != nil {
 		_ = os.RemoveAll(tmpDir)
 		return "", fmt.Errorf("clone repo: %w", err)

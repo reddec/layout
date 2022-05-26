@@ -21,8 +21,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"reflect"
+	"runtime"
 
 	"github.com/reddec/layout/internal"
+	"github.com/reddec/layout/internal/gitclient"
 	"github.com/reddec/layout/internal/ui"
 	"github.com/reddec/layout/internal/ui/nice"
 	"github.com/reddec/layout/internal/ui/simple"
@@ -35,6 +38,7 @@ type NewCommand struct {
 	Debug          bool   `short:"d" long:"debug" env:"DEBUG" description:"Enable debug mode"`
 	AskOnce        bool   `short:"a" long:"ask-once" env:"ASK_ONCE" description:"Do not retry on wrong user input, good for automation"`
 	DisableCleanup bool   `short:"D" long:"disable-cleanup" env:"DISABLE_CLEANUP" description:"Disable removing created dirs in case of failure"`
+	Git            string `short:"g" long:"git" env:"GIT" description:"Git client" default:"auto" choice:"auto" choice:"native" choice:"embedded"`
 	Args           struct {
 		URL  string `positional-arg-name:"source" required:"yes" description:"URL, abbreviation or path to layout"`
 		Dest string `positional-arg-name:"destination" required:"yes" description:"Destination directory, will be created"`
@@ -72,6 +76,11 @@ func (cmd NewCommand) Execute([]string) error {
 	if _, err := os.Stat(cmd.Args.Dest); os.IsNotExist(err) {
 		weCreatedDestination = true
 	}
+
+	gitClient := cmd.gitClient(ctx)
+	if cmd.Debug {
+		fmt.Println("Git:", runtime.FuncForPC(reflect.ValueOf(gitClient).Pointer()).Name())
+	}
 	err = internal.Deploy(ctx, internal.Config{
 		Source:  cmd.Args.URL,
 		Target:  cmd.Args.Dest,
@@ -81,6 +90,7 @@ func (cmd NewCommand) Execute([]string) error {
 		Debug:   cmd.Debug,
 		Version: cmd.Version,
 		AskOnce: cmd.AskOnce,
+		Git:     gitClient,
 	})
 
 	if err != nil && weCreatedDestination && !cmd.DisableCleanup {
@@ -88,4 +98,17 @@ func (cmd NewCommand) Execute([]string) error {
 	}
 
 	return err
+}
+
+func (cmd NewCommand) gitClient(ctx context.Context) gitclient.Client {
+	switch cmd.Git {
+	case "auto":
+		return gitclient.Auto(ctx)
+	case "native":
+		return gitclient.Native
+	case "embedded":
+		fallthrough
+	default:
+		return gitclient.Embedded
+	}
 }
