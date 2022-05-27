@@ -278,11 +278,47 @@ func (r *renderContext) Save(key string, value interface{}) {
 
 // Render go-template value with state as context in memory.
 func (r *renderContext) Render(value string) (string, error) {
-	p, err := template.New("").Delims(r.open, r.close).Funcs(sprig.TxtFuncMap()).Parse(value)
+	funcMap := sprig.TxtFuncMap()
+	funcMap["getRootFile"] = getRootFile
+	p, err := template.New("").Delims(r.open, r.close).Funcs(funcMap).Parse(value)
 	if err != nil {
 		return "", err
 	}
 	var out bytes.Buffer
 	err = p.Execute(&out, r.state)
 	return out.String(), err
+}
+
+// get content of file with specific name (can be only base name) in any of root folders:
+//
+//     WD: /foo/bar/xyz
+//     Name: .gitignore
+//     Will check:
+//        /foo/bar/xyz/.gitignore
+//        /foo/bar/.gitignore
+//        /foo/.gitignore
+//        /.gitignore
+//
+// If nothing found - ErrNotExists returned
+func getRootFile(name string) (string, error) {
+	root, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	name = filepath.Base(name)
+	for {
+		file := filepath.Join(root, name)
+		content, err := ioutil.ReadFile(file)
+		if err == nil {
+			return string(content), nil
+		}
+		if !os.IsNotExist(err) {
+			return "", fmt.Errorf("read %s: %w", file, err)
+		}
+		next := filepath.Dir(root)
+		if next == root {
+			return "", os.ErrNotExist
+		}
+		root = next
+	}
 }

@@ -475,7 +475,23 @@ Additional "magic" vairables:
 
 - `dirname` (usage: `{{.dirname}}`) - base name of destination directory, commonly used as project name
 
-[Sprig template utilities](http://masterminds.github.io/sprig/) also available.
+#### Functions
+
+* [Sprig template utilities](http://masterminds.github.io/sprig/) available.
+* Custom functions:
+  * `getRootFile` (v1.2.1+) - (`{{getRootFile "myfile"}}`) get content of file with specific name in any of root folders. Example:
+
+         Current working directory: /foo/bar/xyz
+         Looking for name: .gitignore
+         Will check:
+            /foo/bar/xyz/.gitignore
+            /foo/bar/.gitignore
+            /foo/.gitignore
+            /.gitignore
+    
+    If nothing found - ErrNotExists returned
+
+#### Flow
 
 In manifest, the following items also renders just before usage:
 
