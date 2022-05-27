@@ -25,11 +25,11 @@ type Dialog interface {
 	// One result for one question
 	One(ctx context.Context, question string, defaultValue string) (string, error)
 	// Many results for one question
-	Many(ctx context.Context, question string, defaultValue string) ([]string, error)
+	Many(ctx context.Context, question string, defaultValue []string) ([]string, error)
 	// Select one option from list
 	Select(ctx context.Context, question string, defaultValue string, options []string) (string, error)
 	// Choose several options from list
-	Choose(ctx context.Context, question string, defaultValue string, options []string) ([]string, error)
+	Choose(ctx context.Context, question string, defaultValue []string, options []string) ([]string, error)
 }
 
 type UI interface {

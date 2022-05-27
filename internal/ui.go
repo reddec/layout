@@ -18,6 +18,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/reddec/layout/internal/ui"
@@ -35,9 +36,9 @@ func (p Prompt) ask(ctx context.Context, display ui.Dialog) (interface{}, error)
 	switch p.Type {
 	case VarList:
 		if len(p.Options) == 0 {
-			return display.Many(ctx, p.question(), p.Default)
+			return display.Many(ctx, p.question(), p.defaultOptions())
 		}
-		return display.Choose(ctx, p.question(), p.Default, p.Options)
+		return display.Choose(ctx, p.question(), p.defaultOptions(), p.Options)
 	case "":
 		p.Type = VarString
 		fallthrough
@@ -45,15 +46,43 @@ func (p Prompt) ask(ctx context.Context, display ui.Dialog) (interface{}, error)
 		var v string
 		var err error
 		if len(p.Options) > 0 {
-			v, err = display.Select(ctx, p.question(), p.Default, p.Options)
+			v, err = display.Select(ctx, p.question(), p.defaultOption(), p.Options)
 		} else {
-			v, err = display.One(ctx, p.question(), p.Default)
+			v, err = display.One(ctx, p.question(), p.defaultOption())
 		}
 		if err != nil {
 			return nil, err
 		}
 		return p.Type.Parse(v)
 	}
+}
+
+func (p Prompt) defaultOption() string {
+	if s, ok := p.Default.(string); ok {
+		return s
+	}
+	if p.Default == nil {
+		return ""
+	}
+	return fmt.Sprint(p.Default)
+}
+
+func (p Prompt) defaultOptions() []string {
+	if l, ok := p.Default.([]string); ok {
+		return l
+	}
+	if arr, ok := p.Default.([]interface{}); ok {
+		ans := make([]string, 0, len(arr))
+		for _, v := range arr {
+			ans = append(ans, fmt.Sprint(v))
+		}
+		return ans
+	}
+	opt := p.defaultOption()
+	if opt == "" {
+		return nil
+	}
+	return []string{opt}
 }
 
 func toBool(line string) bool {

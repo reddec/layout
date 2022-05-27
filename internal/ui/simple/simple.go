@@ -57,18 +57,18 @@ func (ui *UI) One(_ context.Context, question string, defaultValue string) (stri
 	return ui.readLine(defaultValue)
 }
 
-func (ui *UI) Many(_ context.Context, question string, defaultValue string) ([]string, error) {
+func (ui *UI) Many(_ context.Context, question string, defaultValue []string) ([]string, error) {
 	if err := ui.print(question, "? (comma-separated) "); err != nil {
 		return nil, err
 	}
 
-	if defaultValue != "" {
-		if err := ui.print("[default: ", defaultValue, "] "); err != nil {
+	if len(defaultValue) > 0 {
+		if err := ui.print("[default: ", strings.Join(defaultValue, ","), "] "); err != nil {
 			return nil, err
 		}
 	}
 
-	line, err := ui.readLine("")
+	line, err := ui.readLine(strings.Join(defaultValue, ","))
 	return toList(line), err
 }
 
@@ -113,7 +113,7 @@ func (ui *UI) Select(_ context.Context, question string, defaultValue string, op
 	return opts[0], nil
 }
 
-func (ui *UI) Choose(_ context.Context, question string, defaultValue string, options []string) ([]string, error) {
+func (ui *UI) Choose(_ context.Context, question string, defaultValue []string, options []string) ([]string, error) {
 	if err := ui.print(question, "\n"); err != nil {
 		return nil, err
 	}
@@ -128,23 +128,28 @@ func (ui *UI) Choose(_ context.Context, question string, defaultValue string, op
 		return nil, err
 	}
 
-	if defaultValue != "" {
-		if err := ui.print("[default: ", defaultValue, "] "); err != nil {
+	if len(defaultValue) > 0 {
+		if err := ui.print("[default: ", strings.Join(defaultValue, ","), "] "); err != nil {
 			return nil, err
 		}
 	}
 
-	if idx := indexOf(options, defaultValue); idx != -1 {
-		defaultValue = strconv.Itoa(idx + 1)
-	} else {
-		defaultValue = ""
+	var defaultIdx []string
+	for _, def := range defaultValue {
+		if idx := indexOf(options, def); idx != -1 {
+			defaultIdx = append(defaultIdx, strconv.Itoa(idx))
+		}
+	}
+	defaultValueLine := ""
+	if len(defaultIdx) > 0 {
+		defaultValueLine = strings.Join(defaultIdx, ",")
 	}
 
 	if err := ui.print(": "); err != nil {
 		return nil, err
 	}
 
-	return ui.readOptions(options, defaultValue)
+	return ui.readOptions(options, defaultValueLine)
 }
 
 func (ui *UI) Error(_ context.Context, message string) error {

@@ -44,12 +44,12 @@ func (ui *UI) One(_ context.Context, question string, defaultValue string) (stri
 	return res, wrapErr(err)
 }
 
-func (ui *UI) Many(_ context.Context, question string, defaultValue string) ([]string, error) {
+func (ui *UI) Many(_ context.Context, question string, defaultValue []string) ([]string, error) {
 	var res string
 	err := survey.AskOne(&survey.Input{
 		Message: question,
 		Help:    "comma-separated list",
-		Default: defaultValue,
+		Default: strings.Join(defaultValue, ","),
 	}, &res)
 	return toList(res), wrapErr(err)
 }
@@ -64,7 +64,7 @@ func (ui *UI) Select(_ context.Context, question string, defaultValue string, op
 	return res, wrapErr(err)
 }
 
-func (ui *UI) Choose(_ context.Context, question string, defaultValue string, options []string) ([]string, error) {
+func (ui *UI) Choose(_ context.Context, question string, defaultValue []string, options []string) ([]string, error) {
 	var res = make([]string, 0)
 	err := survey.AskOne(&survey.MultiSelect{
 		Message: question,

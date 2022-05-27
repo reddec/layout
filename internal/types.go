@@ -47,8 +47,8 @@ type Prompt struct {
 	Include string // template
 	Var     string
 	Type    VarType
-	Options []string // allowed values, templated
-	Default string   // template
+	Options []string    // allowed values, templated
+	Default interface{} // template if not strings, array could be used for picking multiple default values (in case type is list)
 	When    Condition
 }
 

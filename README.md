@@ -173,7 +173,6 @@ Each project directory should contain:
 - `layout.yaml` - main manifest file
 - `content` - content directory which will be copied to the destination
 
-
 Valid repo structure:
 
 **one repo - one layout**:
@@ -183,7 +182,6 @@ Valid repo structure:
 ├── layout.yaml
 └── content
 ```
-
 
 **one repo - many layouts** (v1.3.0+):
 
@@ -234,6 +232,16 @@ For now, I suggest pinning major version only: `~1`. `layout` is following seman
 one major version are backward compatible (manifest designed for `1.0.0` will work normally even in `layout`
 version `1.9.5`, but without guarantees for `2.0.0`).
 
+#### Title and Description
+
+There are two informational field in manifest:
+
+* `title` - short description about layout. Only title will be shown to user in case of selecting manifest in
+  multi-project repo
+* `description` - full project description
+
+Both title and description will be shown before prompts.
+
 #### Delimiters
 
 Template delimiters could be overridden by in `delimiters` section. Defaults are `{{` (open), `}}` (close).
@@ -267,7 +275,8 @@ and could be used in conditions and templates later.
     * `float` - user input should be 10-base 64-bit float
     * `bool` - `true` if user input (case insensitive) is `t`, `y`, `yes`, `true`, or `ok`; otherwise `false`
     * `list` - list of strings. If options are not provided, values are comma-separated
-* `default` - default suggested value
+* `default` - default suggested value. Since v1.3.0 it can be an array, which is useful when you want to pick multiple
+  default values for `type: list`
 * `options` - allows user select single option (not `type: list`) or multiple options (type: `list`)
 * `when` - condition written in  [tengo language](https://github.com/d5/tengo) which should return boolean;
   default `true`. Variable will not be defined (use [defaults](#defaults) if needed) and prompt will not be rendered or
@@ -511,17 +520,18 @@ Additional "magic" vairables:
 
 * [Sprig template utilities](http://masterminds.github.io/sprig/) available.
 * Custom functions:
-  * `getRootFile` (v1.2.1+) - (`{{getRootFile "myfile"}}`) get content of file with specific name in any of root folders. Example:
+    * `getRootFile` (v1.2.1+) - (`{{getRootFile "myfile"}}`) get content of file with specific name in any of root
+      folders. Example:
 
-         Current working directory: /foo/bar/xyz
-         Looking for name: .gitignore
-         Will check:
-            /foo/bar/xyz/.gitignore
-            /foo/bar/.gitignore
-            /foo/.gitignore
-            /.gitignore
-    
-    If nothing found - ErrNotExists returned
+           Current working directory: /foo/bar/xyz
+           Looking for name: .gitignore
+           Will check:
+              /foo/bar/xyz/.gitignore
+              /foo/bar/.gitignore
+              /foo/.gitignore
+              /.gitignore
+
+      If nothing found - ErrNotExists returned
 
 #### Flow
 

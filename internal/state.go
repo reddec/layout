@@ -169,10 +169,12 @@ func (p Prompt) render(renderer *renderContext) (Prompt, error) {
 		p.Include = v
 	}
 
-	if v, err := renderer.Render(p.Default); err != nil {
-		return p, fmt.Errorf("render default: %w", err)
-	} else {
-		p.Default = v
+	if s, ok := p.Default.(string); ok {
+		if v, err := renderer.Render(s); err != nil {
+			return p, fmt.Errorf("render default: %w", err)
+		} else {
+			p.Default = v
+		}
 	}
 
 	options := make([]string, 0, len(p.Options))
