@@ -32,7 +32,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/davecgh/go-spew/spew"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const (

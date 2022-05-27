@@ -29,7 +29,7 @@ import (
 	"github.com/reddec/layout/internal/ui"
 
 	"github.com/d5/tengo/v2"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // Ask questions to user and generate state. Base file initially equal to manifest file and used to resolve relative includes.
