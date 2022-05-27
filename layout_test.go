@@ -45,7 +45,7 @@ func TestRender_basic(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	err = internal.Deploy(context.Background(), internal.Config{
-		Source: "test-data",
+		Source: "test-data/projectA",
 		Target: tempDir,
 		Display: simple.New(bufio.NewReader(strings.NewReader(
 			"alice\n1234\n3\nn\n1\n",
@@ -93,7 +93,7 @@ func TestRender_gitClone(t *testing.T) {
 	w, err := repo.Worktree()
 	require.NoError(t, err)
 
-	files, err := internal.CopyTree("test-data", repoDir)
+	files, err := internal.CopyTree("test-data/projectA", repoDir)
 	require.NoError(t, err)
 
 	for _, f := range files {
@@ -144,4 +144,39 @@ func TestRender_gitClone(t *testing.T) {
 	content, err := ioutil.ReadFile(filepath.Join(resultDir, "alice", "the foo.txt"))
 	require.NoError(t, err)
 	require.Equal(t, "Hello world the foo as bar", string(bytes.TrimSpace(content)))
+}
+
+func TestRender_multiProject(t *testing.T) {
+	t.Run("select project A", func(t *testing.T) {
+		tempDir, err := os.MkdirTemp("", "")
+		require.NoError(t, err)
+		defer os.RemoveAll(tempDir)
+
+		err = internal.Deploy(context.Background(), internal.Config{
+			Source: "test-data",
+			Target: tempDir,
+			Display: simple.New(bufio.NewReader(strings.NewReader(
+				"1\nalice\n1234\n3\nn\n1\n",
+			)), io.Discard),
+		})
+		require.NoError(t, err)
+		assert.FileExists(t, filepath.Join(tempDir, "created.txt"))
+
+	})
+	t.Run("select project B", func(t *testing.T) {
+		tempDir, err := os.MkdirTemp("", "")
+		require.NoError(t, err)
+		defer os.RemoveAll(tempDir)
+
+		err = internal.Deploy(context.Background(), internal.Config{
+			Source: "test-data",
+			Target: tempDir,
+			Display: simple.New(bufio.NewReader(strings.NewReader(
+				"2\n",
+			)), io.Discard),
+		})
+		require.NoError(t, err)
+		assert.FileExists(t, filepath.Join(tempDir, "layout2"))
+
+	})
 }

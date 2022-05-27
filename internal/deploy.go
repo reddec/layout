@@ -96,7 +96,31 @@ func Deploy(ctx context.Context, config Config) error {
 		defer os.RemoveAll(tmpDir)
 		projectDir = tmpDir
 	}
-	manifestFile := filepath.Join(projectDir, ManifestFile)
+
+	manifestFiles, err := findManifests(projectDir)
+	if err != nil {
+		return fmt.Errorf("find manifests: %w", err)
+	}
+	if len(manifestFiles) == 0 {
+		return fmt.Errorf("no manifests files discovered")
+	}
+
+	var manifestFile string
+
+	if len(manifestFiles) == 1 {
+		// pick first as default
+		manifestFile = manifestFiles[0]
+		projectDir = filepath.Dir(manifestFile)
+	} else {
+		// ask which manifest to use
+		selectedManifest, err := selectManifest(ctx, config.Display, manifestFiles)
+		if err != nil {
+			return fmt.Errorf("ask for manifest: %w", err)
+		}
+		manifestFile = selectedManifest
+		projectDir = filepath.Dir(selectedManifest)
+	}
+
 	manifest, err := loadManifest(manifestFile)
 	if err != nil {
 		return fmt.Errorf("load manifest %s: %w", manifestFile, err)
@@ -114,6 +138,54 @@ func Deploy(ctx context.Context, config Config) error {
 	}
 
 	return nil
+}
+
+func selectManifest(ctx context.Context, display ui.UI, manifests []string) (string, error) {
+	var options []string
+	for _, m := range manifests {
+		manifest, err := loadManifest(m)
+		if err != nil {
+			return "", fmt.Errorf("read manifest %s: %w", manifest, err)
+		}
+		options = append(options, manifest.Title)
+	}
+	picked, err := display.Select(ctx, "Which to use", options[0], options)
+	if err != nil {
+		return "", fmt.Errorf("select manifest: %w", err)
+	}
+	for i, opt := range options {
+		if opt == picked {
+			return manifests[i], nil
+		}
+	}
+	return "", fmt.Errorf("picked unknown manifest")
+}
+
+// find manifests in root directory recursive. It will not scan directory with manifest file deeper.
+func findManifests(rootDir string) ([]string, error) {
+	var files []string
+	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			return nil
+		}
+		manifestFile := filepath.Join(path, ManifestFile)
+		stat, err := os.Stat(manifestFile)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		}
+		if stat.IsDir() {
+			return nil
+		}
+		files = append(files, manifestFile)
+		return filepath.SkipDir // do not go to layout dir
+	})
+	return files, err
 }
 
 // clones from git repository into temporary directory.

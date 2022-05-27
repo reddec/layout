@@ -54,9 +54,10 @@ func loadManifest(file string) (*Manifest, error) {
 // Communicates with user and renders all templates and executes hooks. Debug flag enables state dump to stdout
 // after user input. Once flags disables retry on wrong user input.
 func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir, layoutDir string, debug, once bool, initialState map[string]interface{}) error {
-	if m.Title != "" {
-		if err := display.Title(ctx, m.Title); err != nil {
-			return fmt.Errorf("show title: %w", err)
+	welcomeMessage := strings.TrimSpace(strings.Join([]string{m.Title, m.Description}, "\n\n"))
+	if welcomeMessage != "" {
+		if err := display.Title(ctx, welcomeMessage); err != nil {
+			return fmt.Errorf("show welcome message: %w", err)
 		}
 	}
 	var state = make(map[string]interface{})

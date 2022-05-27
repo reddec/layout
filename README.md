@@ -46,6 +46,7 @@ however layout offers additional features and bonuses:
 - supports multiple inline hooks (with portable shell) and templated hooks
 - hooks also supports condition :-)
 - supports normal labeling for variables input (cookiecuter...)
+- supports multiple layout in one repo
 
 I generally do not like competing with other open-source projects but this time
 I would like to say that this project is aiming to fix legacy cookiecutter's problems
@@ -161,10 +162,41 @@ See [configuration](#configuration) for details.
 
 ### Layout structure
 
-Each repository should contain:
+Once repository fetched, `layout` will scan directories with `layout.yaml` files. Each directory with such file will
+be marked as project directory.
+
+In case there is only one project directory, then it will be automatically picked. Otherwise, user will be prompted to
+pick desired project (based on `title` field).
+
+Each project directory should contain:
 
 - `layout.yaml` - main manifest file
 - `content` - content directory which will be copied to the destination
+
+
+Valid repo structure:
+
+**one repo - one layout**:
+
+```
+/
+├── layout.yaml
+└── content
+```
+
+
+**one repo - many layouts** (v1.3.0+):
+
+```
+/
+├── foo
+│    └── layoutA
+│         ├── layout.yaml
+│         └── content
+└── layoutB
+    ├── layout.yaml
+    └── content
+```
 
 ### Manifest
 
@@ -633,7 +665,6 @@ See [roadmap](#roadmap) for planning related features.
     - global before/after hooks
     - globally disable hooks
     - compute variables by script
-    - multiple templates in one repo
 - Delivery
     - apt repository
     - Arch AUR

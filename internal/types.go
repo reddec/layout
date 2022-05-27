@@ -27,9 +27,10 @@ const (
 )
 
 type Manifest struct {
-	Version    string // minimal layout version (semver). Empty means any version
-	Title      string
-	Delimiters struct {
+	Version     string // minimal layout version (semver). Empty means any version
+	Title       string // short description of what manifest doing, should be unique in multi-layouts repo
+	Description string // full manifest description
+	Delimiters  struct {
 		Open  string
 		Close string
 	} // custom template delimiter for go templates, default is '{{' and '}}'
