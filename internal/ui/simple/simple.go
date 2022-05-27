@@ -19,11 +19,14 @@ package simple
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/reddec/layout/internal/ui"
 )
 
 func New(in *bufio.Reader, out io.Writer) *UI {
@@ -164,7 +167,7 @@ func (ui *UI) print(data ...interface{}) error {
 func (ui *UI) readLine(defaultValue string) (string, error) {
 	line, _, err := ui.in.ReadLine()
 	if err != nil {
-		return "", err
+		return "", wrapErr(err)
 	}
 
 	v := strings.TrimSpace(string(line))
@@ -223,4 +226,14 @@ func indexOf(list []string, item string) int {
 		}
 	}
 	return -1
+}
+
+func wrapErr(err error) error {
+	if err == nil {
+		return err
+	}
+	if errors.Is(err, io.EOF) {
+		return ui.ErrInterrupted
+	}
+	return err
 }

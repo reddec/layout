@@ -18,11 +18,14 @@ package nice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
+	"github.com/AlecAivazis/survey/v2/terminal"
+	"github.com/reddec/layout/internal/ui"
 )
 
 func New() *UI {
@@ -38,7 +41,7 @@ func (ui *UI) One(_ context.Context, question string, defaultValue string) (stri
 		Message: question,
 		Default: defaultValue,
 	}, &res)
-	return res, err
+	return res, wrapErr(err)
 }
 
 func (ui *UI) Many(_ context.Context, question string, defaultValue string) ([]string, error) {
@@ -48,7 +51,7 @@ func (ui *UI) Many(_ context.Context, question string, defaultValue string) ([]s
 		Help:    "comma-separated list",
 		Default: defaultValue,
 	}, &res)
-	return toList(res), err
+	return toList(res), wrapErr(err)
 }
 
 func (ui *UI) Select(_ context.Context, question string, defaultValue string, options []string) (string, error) {
@@ -58,7 +61,7 @@ func (ui *UI) Select(_ context.Context, question string, defaultValue string, op
 		Options: options,
 		Default: defaultValue,
 	}, &res)
-	return res, err
+	return res, wrapErr(err)
 }
 
 func (ui *UI) Choose(_ context.Context, question string, defaultValue string, options []string) ([]string, error) {
@@ -68,7 +71,7 @@ func (ui *UI) Choose(_ context.Context, question string, defaultValue string, op
 		Options: options,
 		Default: defaultValue,
 	}, &res)
-	return res, err
+	return res, wrapErr(err)
 }
 
 func (ui *UI) Error(_ context.Context, message string) error {
@@ -78,13 +81,13 @@ func (ui *UI) Error(_ context.Context, message string) error {
 		return err
 	}
 	_, err = fmt.Println(actual)
-	return err
+	return wrapErr(err)
 }
 
 func (ui *UI) Title(_ context.Context, message string) error {
 	_, err := fmt.Println("\n\n", message)
 	_, _ = fmt.Println()
-	return err
+	return wrapErr(err)
 }
 
 func (ui *UI) Info(ctx context.Context, message string) error {
@@ -94,7 +97,7 @@ func (ui *UI) Info(ctx context.Context, message string) error {
 		return err
 	}
 	_, err = fmt.Println(actual)
-	return err
+	return wrapErr(err)
 }
 
 func toList(line string) []string {
@@ -108,4 +111,14 @@ func toList(line string) []string {
 		values = append(values, value)
 	}
 	return values
+}
+
+func wrapErr(err error) error {
+	if err == nil {
+		return err
+	}
+	if errors.Is(err, terminal.InterruptErr) {
+		return ui.ErrInterrupted
+	}
+	return err
 }

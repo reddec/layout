@@ -71,7 +71,7 @@ func askState(ctx context.Context, display ui.UI, prompts []Prompt, baseFile str
 		// in case of failed user input we will retry again and again till Stdin or context closed
 		for {
 			value, err := prompt.ask(ctx, display)
-			if errors.Is(err, io.EOF) || errors.Is(err, os.ErrClosed) {
+			if errors.Is(err, io.EOF) || errors.Is(err, os.ErrClosed) || errors.Is(err, ui.ErrInterrupted) {
 				return fmt.Errorf("ask value for %s (step %d) in %s: %w", prompt.Var, i, baseFile, err)
 			}
 			if err != nil {

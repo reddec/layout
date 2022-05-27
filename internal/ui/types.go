@@ -18,6 +18,7 @@ package ui
 
 import (
 	"context"
+	"errors"
 )
 
 type Dialog interface {
@@ -40,3 +41,6 @@ type UI interface {
 	// Info shows information message
 	Info(ctx context.Context, message string) error
 }
+
+// ErrInterrupted must be returned when user interrupted operation
+var ErrInterrupted = errors.New("user interrupted")
