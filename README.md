@@ -696,6 +696,7 @@ See [roadmap](#roadmap) for planning related features.
     - globally disable hooks
     - compute variables by script
     - support `.layout` file in working path
+    - support `include` in before/after hooks
 - Delivery
     - apt repository
     - Arch AUR
