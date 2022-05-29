@@ -139,7 +139,6 @@ Since v1.3.1
     default  URL pattern to resolve layout
     git      git client mode
 
-
 ### Architecture
 
 ```mermaid
@@ -541,13 +540,15 @@ Additional "magic" vairables:
 
            Current working directory: /foo/bar/xyz
            Looking for name: .gitignore
-           Will check:
+           Will check (and return content):
               /foo/bar/xyz/.gitignore
               /foo/bar/.gitignore
               /foo/.gitignore
               /.gitignore
 
-      If nothing found - ErrNotExists returned
+      If nothing found - `ErrNotExists` returned
+    * `findRootFile` (v1.3.2+) - (`{{findRootFile "myfile"}}`) find path to file with specific name in any of root
+      folders. Same as `getRootFile` but instead of returning content it returning path to file.
 
 #### Flow
 
