@@ -93,12 +93,13 @@ state any changes (for legal details please read LICENSE file).
 #### show
 
     Usage:
-    layout [OPTIONS] show <config-file>
+    layout [OPTIONS] show <config | config-file>
     
     Help Options:
     -h, --help      Show this help message
     
     Available commands:
+    config       current config
     config-file  location of default config file
 
 #### new

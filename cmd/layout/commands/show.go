@@ -16,10 +16,16 @@ limitations under the License.
 
 package commands
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+
+	"gopkg.in/yaml.v3"
+)
 
 type ShowCommand struct {
 	ConfigFile ShowConfigFileCommand `command:"config-file" description:"location of default config file"`
+	Config     ShowConfigCommand     `command:"config" description:"current config"`
 }
 
 type ShowConfigFileCommand struct {
@@ -28,4 +34,16 @@ type ShowConfigFileCommand struct {
 func (cmd ShowConfigFileCommand) Execute([]string) error {
 	_, err := fmt.Println(defaultConfigFile())
 	return err
+}
+
+type ShowConfigCommand struct {
+	ConfigSource
+}
+
+func (cmd ShowConfigCommand) Execute([]string) error {
+	c, err := cmd.readConfig()
+	if err != nil {
+		return err
+	}
+	return yaml.NewEncoder(os.Stdout).Encode(c)
 }
