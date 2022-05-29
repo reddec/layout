@@ -66,7 +66,7 @@ func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir, 
 	}
 	// set required magic variables
 	state[MagicVarDir] = filepath.Base(destinationDir)
-	renderer := newRenderContext(state).Delimiters(m.Delimiters.Open, m.Delimiters.Close)
+	renderer := newRenderContext(state).Delimiters(m.Delimiters.Open, m.Delimiters.Close).WorkDir(destinationDir)
 
 	for i, c := range m.Default {
 		if err := c.compute(renderer); err != nil {
@@ -248,9 +248,10 @@ func newRenderContext(initialState map[string]interface{}) *renderContext {
 
 // renderContext aggregates required information for rendering templates.
 type renderContext struct {
-	state map[string]interface{}
-	open  string
-	close string
+	state   map[string]interface{}
+	open    string
+	close   string
+	workDir string // real destination directory
 }
 
 // Delimiters which will be used in template. Default is {{ and }}.
@@ -261,6 +262,12 @@ func (r *renderContext) Delimiters(open, close string) *renderContext {
 	if close != "" {
 		r.close = close
 	}
+	return r
+}
+
+// WorkDir sets location which will be used as root for rendering functions.
+func (r *renderContext) WorkDir(path string) *renderContext {
+	r.workDir = path
 	return r
 }
 
@@ -279,10 +286,17 @@ func (r *renderContext) Save(key string, value interface{}) {
 
 // Render go-template value with state as context in memory.
 func (r *renderContext) Render(value string) (string, error) {
+	if r.workDir == "" {
+		p, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+		r.workDir = p
+	}
 	funcMap := sprig.TxtFuncMap()
-	funcMap["getRootFile"] = getRootFile
-	funcMap["findRootFile"] = findRootFile
-	funcMap["findRootDir"] = findRootDir
+	funcMap["getRootFile"] = getRootFile(r.workDir)
+	funcMap["findRootFile"] = findRootFile(r.workDir)
+	funcMap["findRootDir"] = findRootDir(r.workDir)
 	p, err := template.New("").Delims(r.open, r.close).Funcs(funcMap).Parse(value)
 	if err != nil {
 		return "", err
@@ -303,26 +317,24 @@ func (r *renderContext) Render(value string) (string, error) {
 //        /.gitignore
 //
 // If nothing found - ErrNotExists returned
-func getRootFile(name string) (string, error) {
-	root, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	name = filepath.Base(name)
-	for {
-		file := filepath.Join(root, name)
-		content, err := ioutil.ReadFile(file)
-		if err == nil {
-			return string(content), nil
+func getRootFile(root string) func(string) (string, error) {
+	return func(name string) (string, error) {
+		name = filepath.Base(name)
+		for {
+			file := filepath.Join(root, name)
+			content, err := ioutil.ReadFile(file)
+			if err == nil {
+				return string(content), nil
+			}
+			if !os.IsNotExist(err) {
+				return "", fmt.Errorf("read %s: %w", file, err)
+			}
+			next := filepath.Dir(root)
+			if next == root {
+				return "", os.ErrNotExist
+			}
+			root = next
 		}
-		if !os.IsNotExist(err) {
-			return "", fmt.Errorf("read %s: %w", file, err)
-		}
-		next := filepath.Dir(root)
-		if next == root {
-			return "", os.ErrNotExist
-		}
-		root = next
 	}
 }
 
@@ -337,24 +349,22 @@ func getRootFile(name string) (string, error) {
 //        /.gitignore
 //
 // If nothing found - ErrNotExists returned
-func findRootFile(name string) (string, error) {
-	root, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	name = filepath.Base(name)
-	for {
-		file := filepath.Join(root, name)
-		if stat, err := os.Stat(file); err == nil && !stat.IsDir() {
-			return file, nil
-		} else if err != nil && !os.IsNotExist(err) {
-			return "", fmt.Errorf("stat %s: %w", file, err)
+func findRootFile(root string) func(string) (string, error) {
+	return func(name string) (string, error) {
+		name = filepath.Base(name)
+		for {
+			file := filepath.Join(root, name)
+			if stat, err := os.Stat(file); err == nil && !stat.IsDir() {
+				return file, nil
+			} else if err != nil && !os.IsNotExist(err) {
+				return "", fmt.Errorf("stat %s: %w", file, err)
+			}
+			next := filepath.Dir(root)
+			if next == root {
+				return "", os.ErrNotExist
+			}
+			root = next
 		}
-		next := filepath.Dir(root)
-		if next == root {
-			return "", os.ErrNotExist
-		}
-		root = next
 	}
 }
 
@@ -369,23 +379,21 @@ func findRootFile(name string) (string, error) {
 //        /.git
 //
 // If nothing found - ErrNotExists returned
-func findRootDir(name string) (string, error) {
-	root, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	name = filepath.Base(name)
-	for {
-		dirPath := filepath.Join(root, name)
-		if stat, err := os.Stat(dirPath); err == nil && stat.IsDir() {
-			return dirPath, nil
-		} else if err != nil && !os.IsNotExist(err) {
-			return "", fmt.Errorf("stat %s: %w", dirPath, err)
+func findRootDir(root string) func(string) (string, error) {
+	return func(name string) (string, error) {
+		name = filepath.Base(name)
+		for {
+			dirPath := filepath.Join(root, name)
+			if stat, err := os.Stat(dirPath); err == nil && stat.IsDir() {
+				return dirPath, nil
+			} else if err != nil && !os.IsNotExist(err) {
+				return "", fmt.Errorf("stat %s: %w", dirPath, err)
+			}
+			next := filepath.Dir(root)
+			if next == root {
+				return "", os.ErrNotExist
+			}
+			root = next
 		}
-		next := filepath.Dir(root)
-		if next == root {
-			return "", os.ErrNotExist
-		}
-		root = next
 	}
 }
