@@ -124,6 +124,21 @@ state any changes (for legal details please read LICENSE file).
     * `auto` (default, but it can be changed in [configuration](#configuration)) in case git installed (`git` binary
       accessible) and git version is 2.13 or higher `native` will be used, otherwise `embedded`
 
+##### set
+
+Since v1.3.1
+
+    Usage:
+    layout [OPTIONS] set <default | git>
+    
+    Help Options:
+    -h, --help      Show this help message
+    
+    Available commands:
+    default  URL pattern to resolve layout
+    git      git client mode
+
+
 ### Architecture
 
 ```mermaid

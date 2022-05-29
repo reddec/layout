@@ -36,6 +36,7 @@ var (
 type Config struct {
 	New  commands.NewCommand  `command:"new" description:"deploy layout"`
 	Show commands.ShowCommand `command:"show" description:"show configuration"`
+	Set  commands.SetCommand  `command:"set" description:"set configuration"`
 }
 
 func main() {
