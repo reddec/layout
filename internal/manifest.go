@@ -282,6 +282,7 @@ func (r *renderContext) Render(value string) (string, error) {
 	funcMap := sprig.TxtFuncMap()
 	funcMap["getRootFile"] = getRootFile
 	funcMap["findRootFile"] = findRootFile
+	funcMap["findRootDir"] = findRootDir
 	p, err := template.New("").Delims(r.open, r.close).Funcs(funcMap).Parse(value)
 	if err != nil {
 		return "", err
@@ -348,6 +349,38 @@ func findRootFile(name string) (string, error) {
 			return file, nil
 		} else if err != nil && !os.IsNotExist(err) {
 			return "", fmt.Errorf("stat %s: %w", file, err)
+		}
+		next := filepath.Dir(root)
+		if next == root {
+			return "", os.ErrNotExist
+		}
+		root = next
+	}
+}
+
+// find path to directory with specific name (can be only base name) in any of root folders:
+//
+//     WD: /foo/bar/xyz
+//     Name: .git
+//     Will check:
+//        /foo/bar/xyz/.git
+//        /foo/bar/.git
+//        /foo/.git
+//        /.git
+//
+// If nothing found - ErrNotExists returned
+func findRootDir(name string) (string, error) {
+	root, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	name = filepath.Base(name)
+	for {
+		dirPath := filepath.Join(root, name)
+		if stat, err := os.Stat(dirPath); err == nil && stat.IsDir() {
+			return dirPath, nil
+		} else if err != nil && !os.IsNotExist(err) {
+			return "", fmt.Errorf("stat %s: %w", dirPath, err)
 		}
 		next := filepath.Dir(root)
 		if next == root {

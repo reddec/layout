@@ -548,7 +548,9 @@ Additional "magic" vairables:
 
       If nothing found - `ErrNotExists` returned
     * `findRootFile` (v1.3.2+) - (`{{findRootFile "myfile"}}`) find path to file with specific name in any of root
-      folders. Same as `getRootFile` but instead of returning content it returning path to file.
+      folders. Same as `getRootFile` but instead of returning content it is returning path to file.
+    * `findRootDir` (v1.3.2+) - (`{{findRootDir "mydir"}}`) find path to directory with specific name in any of root
+      folders. Same as `findRootFile` but instead of looking for file it is looking for directory.
 
 #### Flow
 
