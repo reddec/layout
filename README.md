@@ -121,8 +121,8 @@ state any changes (for legal details please read LICENSE file).
 * `-g,--git` (v1.2.0+) specifies git client which should be used:
     * `native` use native Git binary (must be 2.13+)
     * `embedded` use Golang native git client (safe mode)
-    * `auto` (default) in case git installed (`git` binary accessible) and git version is 2.13 or higher `native` will
-      be used, otherwise `embedded`
+    * `auto` (default, but it can be changed in [configuration](#configuration)) in case git installed (`git` binary
+      accessible) and git version is 2.13 or higher `native` will be used, otherwise `embedded`
 
 ### Architecture
 
@@ -611,6 +611,7 @@ Currently, it supports:
   which will be replaced to the repo details. You may use abbreviations as `<abbr>:<owner>/<repo>`
 * `default`: template for repository without shorthand, default (if not set) is `git@github.com:{0}.git`.
 * `values`: (v1.2.0+) map of anything where key as name and value is default value (any valid YAML type)
+* `git`: (v1.3.1+) preferred git mode (same as in [cli](#new)): `auto` (default), `native`, `embedded`
 
 > Hint: you may use air-gap deployment in case you stored bare repository somewhere locally.
 

@@ -32,24 +32,17 @@ import (
 )
 
 type NewCommand struct {
-	Version        string `long:"version" env:"VERSION" description:"Override binary version to bypass manifest restriction"`
-	Config         string `short:"c" long:"config" env:"CONFIG" description:"Path to configuration file, use show config command to locate default location"`
-	UI             string `short:"u" long:"ui" env:"UI" description:"UI mode" default:"nice" choice:"nice" choice:"simple"`
-	Debug          bool   `short:"d" long:"debug" env:"DEBUG" description:"Enable debug mode"`
-	AskOnce        bool   `short:"a" long:"ask-once" env:"ASK_ONCE" description:"Do not retry on wrong user input, good for automation"`
-	DisableCleanup bool   `short:"D" long:"disable-cleanup" env:"DISABLE_CLEANUP" description:"Disable removing created dirs in case of failure"`
-	Git            string `short:"g" long:"git" env:"GIT" description:"Git client" default:"auto" choice:"auto" choice:"native" choice:"embedded"`
+	ConfigSource
+	Version        string  `long:"version" env:"VERSION" description:"Override binary version to bypass manifest restriction"`
+	UI             string  `short:"u" long:"ui" env:"UI" description:"UI mode" default:"nice" choice:"nice" choice:"simple"`
+	Debug          bool    `short:"d" long:"debug" env:"DEBUG" description:"Enable debug mode"`
+	AskOnce        bool    `short:"a" long:"ask-once" env:"ASK_ONCE" description:"Do not retry on wrong user input, good for automation"`
+	DisableCleanup bool    `short:"D" long:"disable-cleanup" env:"DISABLE_CLEANUP" description:"Disable removing created dirs in case of failure"`
+	Git            gitMode `short:"g" long:"git" env:"GIT" description:"Git client. Default value as in config file (auto)"  choice:"auto" choice:"native" choice:"embedded"`
 	Args           struct {
 		URL  string `positional-arg-name:"source" required:"yes" description:"URL, abbreviation or path to layout"`
 		Dest string `positional-arg-name:"destination" required:"yes" description:"Destination directory, will be created"`
 	} `positional-args:"yes"`
-}
-
-func (cmd NewCommand) configFile() string {
-	if cmd.Config == "" {
-		return defaultConfigFile()
-	}
-	return cmd.Config
 }
 
 func (cmd NewCommand) Execute([]string) error {
@@ -77,7 +70,7 @@ func (cmd NewCommand) Execute([]string) error {
 		weCreatedDestination = true
 	}
 
-	gitClient := cmd.gitClient(ctx)
+	gitClient := cmd.gitClient(ctx, config.Git)
 	if cmd.Debug {
 		fmt.Println("Git:", runtime.FuncForPC(reflect.ValueOf(gitClient).Pointer()).Name())
 	}
@@ -101,8 +94,12 @@ func (cmd NewCommand) Execute([]string) error {
 	return err
 }
 
-func (cmd NewCommand) gitClient(ctx context.Context) gitclient.Client {
-	switch cmd.Git {
+func (cmd NewCommand) gitClient(ctx context.Context, preferred gitMode) gitclient.Client {
+	mode := preferred
+	if cmd.Git != "" {
+		mode = cmd.Git
+	}
+	switch mode {
 	case "auto":
 		return gitclient.Auto(ctx)
 	case "native":
