@@ -534,23 +534,29 @@ Additional "magic" vairables:
 #### Functions
 
 * [Sprig template utilities](http://masterminds.github.io/sprig/) available.
-* Custom functions:
-    * `getRootFile` (v1.2.1+) - (`{{getRootFile "myfile"}}`) get content of file with specific name in any of root
-      folders. Example:
+  * Custom functions:
+      * `getRootFile` (v1.2.1+) - (`{{getRootFile "myfile"}}`) get content of file with specific name in any of root
+        folders. Example:
 
-           Current working directory: /foo/bar/xyz
-           Looking for name: .gitignore
-           Will check (and return content):
-              /foo/bar/xyz/.gitignore
-              /foo/bar/.gitignore
-              /foo/.gitignore
-              /.gitignore
+             Current working directory: /foo/bar/xyz
+             Looking for name: .gitignore
+             Will check (and return content):
+                /foo/bar/xyz/.gitignore
+                /foo/bar/.gitignore
+                /foo/.gitignore
+                /.gitignore
 
-      If nothing found - `ErrNotExists` returned
-    * `findRootFile` (v1.3.2+) - (`{{findRootFile "myfile"}}`) find path to file with specific name in any of root
-      folders. Same as `getRootFile` but instead of returning content it is returning path to file.
-    * `findRootDir` (v1.3.2+) - (`{{findRootDir "mydir"}}`) find path to directory with specific name in any of root
-      folders. Same as `findRootFile` but instead of looking for file it is looking for directory.
+        If nothing found - `ErrNotExists` returned
+      * `findRootFile` (v1.3.2+) - (`{{findRootFile "myfile"}}`) find path to file with specific name in any of root
+        folders. Same as `getRootFile` but instead of returning content it is returning path to file.
+      * `findRootDir` (v1.3.2+) - (`{{findRootDir "mydir"}}`) find path to directory with specific name in any of root
+        folders. Same as `findRootFile` but instead of looking for file it is looking for directory.
+      * `findSubmatch` (v1.3.3+) - capture all regex groups with matching pattern. Example:
+            
+             Pattern: foo[ ]+([^ ]+)
+             Text: foo bar foo baz
+             Returns: [bar, baz]
+      
 
 #### Flow
 

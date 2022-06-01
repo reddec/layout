@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -297,6 +298,7 @@ func (r *renderContext) Render(value string) (string, error) {
 	funcMap["getRootFile"] = getRootFile(r.workDir)
 	funcMap["findRootFile"] = findRootFile(r.workDir)
 	funcMap["findRootDir"] = findRootDir(r.workDir)
+	funcMap["findSubmatch"] = findSubmatchAll
 	p, err := template.New("").Delims(r.open, r.close).Funcs(funcMap).Parse(value)
 	if err != nil {
 		return "", err
@@ -396,4 +398,23 @@ func findRootDir(root string) func(string) (string, error) {
 			root = next
 		}
 	}
+}
+
+// find all regex groups which matches pattern.
+//
+//     Pattern: foo[ ]+([^ ]+)
+//     Text: foo bar foo baz
+//     Returns: [bar, baz]
+//
+// Workaround for https://github.com/Masterminds/sprig/pull/298
+func findSubmatchAll(pattern string, text string) ([]string, error) {
+	p, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil, err
+	}
+	var ans []string
+	for _, group := range p.FindAllStringSubmatch(text, -1) {
+		ans = append(ans, group[1:]...)
+	}
+	return ans, nil
 }

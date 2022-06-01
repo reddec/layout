@@ -17,6 +17,7 @@ limitations under the License.
 package internal
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -63,4 +64,26 @@ func TestGetRootFile(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, content, "module github.com/reddec/layout")
 	})
+}
+
+func TestSubmatch(t *testing.T) {
+	content := `
+foo bar
+
+foo barbaz
+bar=123,456
+`
+	t.Run("match groups", func(t *testing.T) {
+		matches, err := findSubmatchAll(`foo[ ]+(.+)`, content)
+		require.NoError(t, err)
+		require.Equal(t, []string{"bar", "barbaz"}, matches)
+	})
+}
+
+func ExampleFindSubmatch() {
+	pattern := `foo[ ]+([^ ]+)`
+	text := `foo bar foo baz`
+	out, _ := findSubmatchAll(pattern, text)
+	fmt.Println(out)
+	// output: [bar baz]
 }
