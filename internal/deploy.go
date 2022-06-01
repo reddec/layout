@@ -65,6 +65,11 @@ func (cfg Config) withDefaults(ctx context.Context) Config {
 func Deploy(ctx context.Context, config Config) error {
 	config = config.withDefaults(ctx)
 
+	targetDir, err := filepath.Abs(config.Target)
+	if err != nil {
+		return fmt.Errorf("calculate abs path: %w", err)
+	}
+
 	var projectDir string
 
 	// strategy
@@ -132,7 +137,7 @@ func Deploy(ctx context.Context, config Config) error {
 		return fmt.Errorf("manifest version constraint (%s) requires another version of application (current %s)", manifest.Version, config.Version)
 	}
 
-	err = manifest.renderTo(ctx, config.Display, config.Target, projectDir, config.Debug, config.AskOnce, config.Defaults)
+	err = manifest.renderTo(ctx, config.Display, targetDir, projectDir, config.Debug, config.AskOnce, config.Defaults)
 	if err != nil {
 		return fmt.Errorf("render: %w", err)
 	}

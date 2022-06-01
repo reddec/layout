@@ -18,6 +18,7 @@ package internal
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,20 +44,22 @@ func TestCustomDelimiters(t *testing.T) {
 }
 
 func TestGetRootFile(t *testing.T) {
+	workDir, err := filepath.Abs(".")
+	assert.NoError(t, err)
 	t.Run("simple go mod", func(t *testing.T) {
-		content, err := getRootFile("go.mod")
+		content, err := getRootFile(workDir)("go.mod")
 		require.NoError(t, err)
 		require.Contains(t, content, "module github.com/reddec/layout")
 	})
 
 	t.Run("proofed go mod", func(t *testing.T) {
-		_, err := getRootFile("../../../../../../etc/hosts")
+		_, err := getRootFile(workDir)("../../../../../../etc/hosts")
 		require.Error(t, err)
 		require.ErrorIs(t, err, os.ErrNotExist)
 	})
 
 	t.Run("malformed go mod", func(t *testing.T) {
-		content, err := getRootFile("/foo/bar/go.mod")
+		content, err := getRootFile(workDir)("/foo/bar/go.mod")
 		require.NoError(t, err)
 		require.Contains(t, content, "module github.com/reddec/layout")
 	})
