@@ -41,13 +41,17 @@ type NewCommand struct {
 	Git            gitMode `short:"g" long:"git" env:"GIT" description:"Git client. Default value as in config file (auto)"  choice:"auto" choice:"native" choice:"embedded"`
 	Args           struct {
 		URL  string `positional-arg-name:"source" required:"yes" description:"URL, abbreviation or path to layout"`
-		Dest string `positional-arg-name:"destination" required:"yes" description:"Destination directory, will be created"`
+		Dest string `positional-arg-name:"destination" description:"Destination directory, will be created if not exists. If not set - current dir will be used"`
 	} `positional-args:"yes"`
 }
 
 func (cmd NewCommand) Execute([]string) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
+
+	if cmd.Args.Dest == "" {
+		cmd.Args.Dest, _ = os.Getwd()
+	}
 
 	config, err := LoadConfig(cmd.configFile())
 	if err != nil {
