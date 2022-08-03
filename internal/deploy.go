@@ -92,6 +92,11 @@ func Deploy(ctx context.Context, config Config) error {
 		fallthrough
 	case aliasExist: // we found abbreviation template
 		url = strings.ReplaceAll(repoTemplate, "{0}", repo)
+		// alias may point to the dir too
+		if info, err := os.Stat(url); err == nil && info.IsDir() {
+			projectDir = url
+			break
+		}
 		fallthrough
 	default: // finally all we need is to pull remote repository by URL
 		tmpDir, err := cloneFromGit(ctx, config.Git, url)
