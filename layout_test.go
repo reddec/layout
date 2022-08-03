@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -52,6 +53,11 @@ func TestRender_basic(t *testing.T) {
 		)), io.Discard),
 	})
 	require.NoError(t, err)
+
+	filepath.Walk(tempDir, func(path string, info fs.FileInfo, err error) error {
+		t.Log(path)
+		return err
+	})
 
 	assert.FileExists(t, filepath.Join(tempDir, "created.txt"))
 	assert.FileExists(t, filepath.Join(tempDir, "README.md"))
@@ -96,9 +102,10 @@ func TestRender_gitClone(t *testing.T) {
 	files, err := internal.CopyTree("test-data/projectA", repoDir)
 	require.NoError(t, err)
 
-	for _, f := range files {
-		t.Log("+", f)
-		_, err = w.Add(f)
+	for _, f := range files.Paths() {
+		rel, _ := filepath.Rel(repoDir, f)
+		t.Log("+", rel)
+		_, err = w.Add(rel)
 		require.NoError(t, err)
 	}
 

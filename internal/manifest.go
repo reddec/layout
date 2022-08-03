@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -94,8 +93,13 @@ func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir, 
 		return fmt.Errorf("create destination: %w", err)
 	}
 
-	if _, err := CopyTree(filepath.Join(layoutDir, ContentDir), destinationDir); err != nil {
+	tree, err := CopyTree(filepath.Join(layoutDir, ContentDir), destinationDir)
+	if err != nil {
 		return fmt.Errorf("copy content: %w", err)
+	}
+
+	if debug {
+		spew.Dump(tree)
 	}
 
 	// execute pre-generate
@@ -113,48 +117,37 @@ func (m *Manifest) renderTo(ctx context.Context, display ui.UI, destinationDir, 
 		}
 	}
 
-	// render template
+	// render template based on tree
 	// rename files and dirs, empty entries removed
-	err := walk(destinationDir, func(dir string, d fs.DirEntry) error {
-		renderedName, err := renderer.Render(d.Name())
-		if err != nil {
-			return err
-		}
-		renderedName = strings.TrimSpace(renderedName)
-		oldPath := filepath.Join(dir, d.Name())
-		newPath := filepath.Join(dir, renderedName)
-		if len(renderedName) == 0 {
-			return os.RemoveAll(oldPath)
-		}
-		if oldPath == newPath {
-			return nil
-		}
-		return os.Rename(oldPath, newPath)
+	err = tree.Render(func(node *FSTree) (string, error) {
+		return renderer.Render(node.Name)
 	})
 	if err != nil {
 		return fmt.Errorf("render files names: %w", err)
 	}
+
 	// render file contents as template, except ignored
 	ignoredFiles, err := m.filesToIgnore(destinationDir)
 	if err != nil {
 		return fmt.Errorf("calculate which files to ignore: %w", err)
 	}
-	err = filepath.Walk(destinationDir, func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return err
+	err = tree.Render(func(node *FSTree) (string, error) {
+		if node.Dir {
+			return node.Name, nil
 		}
-		if info.IsDir() || ignoredFiles[path] {
-			return nil
+		path := node.Path()
+		if ignoredFiles[path] {
+			return node.Name, nil
 		}
 		templateData, err := ioutil.ReadFile(path)
 		if err != nil {
-			return fmt.Errorf("read content of %s: %w", path, err)
+			return node.Name, fmt.Errorf("read content of %s: %w", path, err)
 		}
 		data, err := renderer.Render(string(templateData))
 		if err != nil {
-			return fmt.Errorf("render %s: %w", path, err)
+			return node.Name, fmt.Errorf("render %s: %w", path, err)
 		}
-		return ioutil.WriteFile(path, []byte(data), info.Mode())
+		return node.Name, ioutil.WriteFile(path, []byte(data), 0755)
 	})
 	if err != nil {
 		return fmt.Errorf("render: %w", err)

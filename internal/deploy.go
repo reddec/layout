@@ -209,8 +209,11 @@ func cloneFromGit(ctx context.Context, client gitclient.Client, url string) (pro
 	return tmpDir, nil
 }
 
-func CopyTree(src string, dest string) ([]string, error) {
-	var files []string
+func CopyTree(src string, dest string) (*FSTree, error) {
+	var root = &FSTree{
+		Name: dest,
+		Dir:  true,
+	}
 	err := filepath.Walk(src, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -220,10 +223,14 @@ func CopyTree(src string, dest string) ([]string, error) {
 		}
 		relPath, err := filepath.Rel(src, path)
 		destPath := filepath.Join(dest, relPath)
+		root.Add(relPath, info.IsDir())
 		if info.IsDir() {
-			return os.Mkdir(destPath, info.Mode())
+			err := os.Mkdir(destPath, info.Mode())
+			if os.IsExist(err) {
+				return nil
+			}
+			return err
 		}
-		files = append(files, relPath)
 		srcFile, err := os.Open(path)
 		if err != nil {
 			return fmt.Errorf("open source (%s): %w", path, err)
@@ -243,7 +250,7 @@ func CopyTree(src string, dest string) ([]string, error) {
 
 		return destFile.Close()
 	})
-	return files, err
+	return root, err
 }
 
 func splitAbbreviation(text string) (abbrev, repo string) {
