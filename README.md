@@ -47,6 +47,7 @@ however layout offers additional features and bonuses:
 - hooks also supports condition :-)
 - supports normal labeling for variables input (cookiecuter...)
 - supports multiple layout in one repo
+- supports `.layout` file in current directory for re-using organization-wide layouts per directory
 
 I generally do not like competing with other open-source projects but this time
 I would like to say that this project is aiming to fix legacy cookiecutter's problems
@@ -125,8 +126,10 @@ state any changes (for legal details please read LICENSE file).
     * `auto` (default, but it can be changed in [configuration](#configuration)) in case git installed (`git` binary
       accessible) and git version is 2.13 or higher `native` will be used, otherwise `embedded`
 
+* (v1.4.0+) if `source` is not set, const of `.layout` file in the current dir will be used for URL
 * (v1.4.0+) if `destination` is not set, the current working directory will be used
 
+Since 1.4.0 it's possible to run just `layout new`.
 
 ##### set
 
@@ -537,29 +540,28 @@ Additional "magic" vairables:
 #### Functions
 
 * [Sprig template utilities](http://masterminds.github.io/sprig/) available.
-  * Custom functions:
-      * `getRootFile` (v1.2.1+) - (`{{getRootFile "myfile"}}`) get content of file with specific name in any of root
-        folders. Example:
+    * Custom functions:
+        * `getRootFile` (v1.2.1+) - (`{{getRootFile "myfile"}}`) get content of file with specific name in any of root
+          folders. Example:
 
-             Current working directory: /foo/bar/xyz
-             Looking for name: .gitignore
-             Will check (and return content):
-                /foo/bar/xyz/.gitignore
-                /foo/bar/.gitignore
-                /foo/.gitignore
-                /.gitignore
+               Current working directory: /foo/bar/xyz
+               Looking for name: .gitignore
+               Will check (and return content):
+                  /foo/bar/xyz/.gitignore
+                  /foo/bar/.gitignore
+                  /foo/.gitignore
+                  /.gitignore
 
-        If nothing found - `ErrNotExists` returned
-      * `findRootFile` (v1.3.2+) - (`{{findRootFile "myfile"}}`) find path to file with specific name in any of root
-        folders. Same as `getRootFile` but instead of returning content it is returning path to file.
-      * `findRootDir` (v1.3.2+) - (`{{findRootDir "mydir"}}`) find path to directory with specific name in any of root
-        folders. Same as `findRootFile` but instead of looking for file it is looking for directory.
-      * `findSubmatch` (v1.3.3+) - capture all regex groups with matching pattern. Example:
-            
-             Pattern: foo[ ]+([^ ]+)
-             Text: foo bar foo baz
-             Returns: [bar, baz]
-      
+          If nothing found - `ErrNotExists` returned
+        * `findRootFile` (v1.3.2+) - (`{{findRootFile "myfile"}}`) find path to file with specific name in any of root
+          folders. Same as `getRootFile` but instead of returning content it is returning path to file.
+        * `findRootDir` (v1.3.2+) - (`{{findRootDir "mydir"}}`) find path to directory with specific name in any of root
+          folders. Same as `findRootFile` but instead of looking for file it is looking for directory.
+        * `findSubmatch` (v1.3.3+) - capture all regex groups with matching pattern. Example:
+
+               Pattern: foo[ ]+([^ ]+)
+               Text: foo bar foo baz
+               Returns: [bar, baz]
 
 #### Flow
 
