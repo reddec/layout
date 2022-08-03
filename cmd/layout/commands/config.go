@@ -48,6 +48,31 @@ func LoadConfig(file string) (*Config, error) {
 	return &config, yaml.NewDecoder(f).Decode(&config)
 }
 
+func (cfg *Config) Merge(other *Config) *Config {
+	cp := *cfg
+	cp.Values = mergeMap(cfg.Values, other.Values)
+	cp.Abbreviations = mergeMap(cfg.Abbreviations, other.Abbreviations)
+
+	if other.Default != "" {
+		cp.Default = other.Default
+	}
+	if other.Git != "" {
+		cp.Git = other.Git
+	}
+	return &cp
+}
+
+func mergeMap[K comparable, V any](src, overlay map[K]V) map[K]V {
+	ans := make(map[K]V, len(src))
+	for k, v := range src {
+		ans[k] = v
+	}
+	for k, v := range overlay {
+		ans[k] = v
+	}
+	return ans
+}
+
 func defaultConfigFile() string {
 	const configFile = "layout.yaml"
 	v, err := os.UserConfigDir()

@@ -18,14 +18,11 @@ package commands
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"reflect"
 	"runtime"
-	"strings"
 
 	"github.com/reddec/layout/internal"
 	"github.com/reddec/layout/internal/gitclient"
@@ -34,7 +31,7 @@ import (
 	"github.com/reddec/layout/internal/ui/simple"
 )
 
-const defaultLayoutFile = ".layout"
+const localConfig = ".layout.yaml"
 
 type NewCommand struct {
 	ConfigSource
@@ -45,7 +42,7 @@ type NewCommand struct {
 	DisableCleanup bool    `short:"D" long:"disable-cleanup" env:"DISABLE_CLEANUP" description:"Disable removing created dirs in case of failure"`
 	Git            gitMode `short:"g" long:"git" env:"GIT" description:"Git client. Default value as in config file (auto)"  choice:"auto" choice:"native" choice:"embedded"`
 	Args           struct {
-		URL  string `positional-arg-name:"source" description:"URL, abbreviation or path to layout. If not set - .layout file will be scanned for the url"`
+		URL  string `positional-arg-name:"source" description:"URL, abbreviation or path to layout. It could be empty, than default section will be used in config"`
 		Dest string `positional-arg-name:"destination" description:"Destination directory, will be created if not exists. If not set - current dir will be used"`
 	} `positional-args:"yes"`
 }
@@ -58,15 +55,13 @@ func (cmd NewCommand) Execute([]string) error {
 		cmd.Args.Dest, _ = os.Getwd()
 	}
 
-	source, err := cmd.source()
-	if err != nil {
-		return err
-	}
-	cmd.Args.URL = source
-
 	config, err := LoadConfig(cmd.configFile())
 	if err != nil {
 		return fmt.Errorf("read config %s: %w", cmd.configFile(), err)
+	}
+
+	if overlayConfig, err := LoadConfig(localConfig); err == nil {
+		config = config.Merge(overlayConfig)
 	}
 
 	var display ui.UI = simple.Default()
@@ -124,18 +119,4 @@ func (cmd NewCommand) gitClient(ctx context.Context, preferred gitMode) gitclien
 	default:
 		return gitclient.Embedded
 	}
-}
-
-func (cmd NewCommand) source() (string, error) {
-	if cmd.Args.URL != "" {
-		return cmd.Args.URL, nil
-	}
-	content, err := ioutil.ReadFile(defaultLayoutFile)
-	if os.IsNotExist(err) {
-		return "", errors.New("neither URL set nor .layout file exists")
-	}
-	if err != nil {
-		return "", fmt.Errorf("read .layout: %w", err)
-	}
-	return strings.TrimSpace(string(content)), nil
 }

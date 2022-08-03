@@ -47,7 +47,7 @@ however layout offers additional features and bonuses:
 - hooks also supports condition :-)
 - supports normal labeling for variables input (cookiecuter...)
 - supports multiple layout in one repo
-- supports `.layout` file in current directory for re-using organization-wide layouts per directory
+- supports `.layout.yaml` overlay file in current directory for re-using organization-wide configuration per directory
 
 I generally do not like competing with other open-source projects but this time
 I would like to say that this project is aiming to fix legacy cookiecutter's problems
@@ -127,7 +127,7 @@ state any changes (for legal details please read LICENSE file).
       accessible) and git version is 2.13 or higher `native` will be used, otherwise `embedded`
 
 * (v1.4.0+) if `source` is not set, const of `.layout` file in the current dir will be used for URL
-* (v1.4.0+) if `destination` is not set, the current working directory will be used
+* (v1.4.0+) if `destination` is not set, the `default` URL from config will be set
 
 Since 1.4.0 it's possible to run just `layout new`.
 
@@ -644,6 +644,9 @@ Currently, it supports:
 * `git`: (v1.3.1+) preferred git mode (same as in [cli](#new)): `auto` (default), `native`, `embedded`
 
 > Hint: you may use air-gap deployment in case you stored bare repository somewhere locally.
+
+Since v1.4.0 it's possible to define overlay in the current directory `.layout.yaml`. Content from this file will
+be merged on top of global config.
 
 Example:
 
