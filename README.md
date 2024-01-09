@@ -18,7 +18,7 @@ Will ask you questions and generate hello-world HTML page based on your answers.
 
 - **Pre-build binary**: prepared for most OS in [releases](https://github.com/reddec/layout/releases).
 - **DEB/RPM/APK packages**:  in [releases](https://github.com/reddec/layout/releases).
-- **From source**: requires Go 1.18+, `go install github.com/reddec/layout@latest`
+- **From source**: requires Go 1.18+, `go install github.com/reddec/layout/cmd/...@latest`
 - **Brew**: `brew install reddec/tap/layout`
 - **Docker**: (supports amd64 and arm64)
     - `ghcr.io/reddec/layout:latest`
